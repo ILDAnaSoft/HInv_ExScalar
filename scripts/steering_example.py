@@ -1,7 +1,6 @@
 from Gaudi.Configuration import *
 
 from Configurables import LcioEvent, EventDataSvc, MarlinProcessorWrapper, GeoSvc
-from k4MarlinWrapper.parseConstants import *
 
 algList = []
 svcList = []
@@ -9,16 +8,12 @@ evtsvc = EventDataSvc()
 
 svcList.append(evtsvc)
 
-CONSTANTS = {
-    "lcgeo_DIR": "/cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-02/lcgeo/v00-16-06",
-    "DetectorModel": "ILD_l5_o1_v02",
-    "CompactFile": "%(lcgeo_DIR)s/ILD/compact/%(DetectorModel)s/%(DetectorModel)s.xml",
-    "OutputDirectory": ".",
-    "OutputBaseName": "ZZ_sl_LR",
-    "PFOCollection": "PandoraPFOs",
-}
-
-parseConstants(CONSTANTS)
+lcgeo_DIR = "/cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-02/lcgeo/v00-16-06"
+DetectorModel = "ILD_l5_o1_v02"
+CompactFile = f"{lcgeo_DIR}/ILD/compact/{DetectorModel}/{DetectorModel}.xml"
+OutputDirectory = "."
+OutputBaseName = "ZZ_sl_LR"
+PFOCollection = "PandoraPFOs"
 
 read = LcioEvent()
 read.OutputLevel = DEBUG
@@ -30,7 +25,7 @@ algList.append(read)
 geoSvc = GeoSvc("GeoSvc")
 geoSvc.OutputLevel = DEBUG
 geoSvc.EnableGeant4Geo = False
-geoSvc.detectors = ["%(CompactFile)s" % CONSTANTS]
+geoSvc.detectors = [CompactFile]
 svcList.append(geoSvc)
 
 MyFastJetProcessor = MarlinProcessorWrapper("MyFastJetProcessor")
@@ -60,7 +55,7 @@ MyIsolatedLeptonTaggingProcessor.Parameters = {
     "DirOfISOMuonWeights": [
         "/cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-02/MarlinReco/v01-31/Analysis/IsolatedLeptonTagging/example/isolated_muon_weights_woYoke"
     ],
-    "InputPandoraPFOsCollection": ["%(PFOCollection)s" % CONSTANTS],
+    "InputPandoraPFOsCollection": [PFOCollection],
     "InputPrimaryVertexCollection": ["PrimaryVertex"],
     "IsSelectingOneIsoLep": ["false"],
     "MaxD0SigForElectron": ["50"],
@@ -87,7 +82,7 @@ MyLeptonPairing.Parameters = {
     "LeptonPair": ["LeptonPair"],
     "PandoraPFOsWithoutIsoLep": ["PandoraPFOsWithoutIsoLep"],
     "PandoraPFOsWithoutLepPair": ["PandoraPFOsWithoutLepPair"],
-    "RootFile": ["%(OutputDirectory)s/%(OutputBaseName)s_LeptonPairing.root" % CONSTANTS],
+    "RootFile": [f"{OutputDirectory}/{OutputBaseName}_LeptonPairing.root"],
     "fillRootTree": ["true"],
 }
 
