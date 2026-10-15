@@ -2,15 +2,16 @@ from Gaudi.Configuration import *
 
 from Configurables import LcioEvent, EventDataSvc, MarlinProcessorWrapper, GeoSvc
 
+from os import environ
+
 algList = []
 svcList = []
 evtsvc = EventDataSvc()
 
 svcList.append(evtsvc)
 
-lcgeo_DIR = "/cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-02/lcgeo/v00-16-06"
 DetectorModel = "ILD_l5_o1_v02"
-CompactFile = f"{lcgeo_DIR}/ILD/compact/{DetectorModel}/{DetectorModel}.xml"
+CompactFile = f"{environ['k4geo_DIR']}/ILD/compact/{DetectorModel}/{DetectorModel}.xml"
 OutputDirectory = "."
 OutputBaseName = "ZZ_sl_LR"
 PFOCollection = "PandoraPFOs"
