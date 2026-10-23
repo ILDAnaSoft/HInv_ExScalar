@@ -113,7 +113,7 @@ MyLCIOOutputProcessor.Parameters = {
 algList.append(MyIsolatedLeptonTaggingProcessor)
 # algList.append(MyLeptonPairing) # located in ILDAnaSoft/ZHH
 algList.append(IsolatedPhotonTagging)
-algList.append(MyFastJetProcessor)
+# algList.append(MyFastJetProcessor)
 algList.append(MyLCIOOutputProcessor)
 
 from Configurables import ApplicationMgr
