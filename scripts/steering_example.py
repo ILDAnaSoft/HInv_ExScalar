@@ -101,10 +101,20 @@ MyFastJetProcessor.Parameters = {
     "storeParticlesInJets": ["true"],
 }
 
+MyLCIOOutputProcessor = MarlinProcessorWrapper("MyLCIOOutputProcessor")
+MyLCIOOutputProcessor.OutputLevel = DEBUG
+MyLCIOOutputProcessor.ProcessorType = "LCIOOutputProcessor"
+MyLCIOOutputProcessor.Parameters = {
+    "CompressionLevel": ["6"],
+    "LCIOOutputFile": [f"{OutputDirectory}/{OutputBaseName}.slcio"],
+    "LCIOWriteMode": ["WRITE_NEW"],
+}
+
 algList.append(MyIsolatedLeptonTaggingProcessor)
 algList.append(MyLeptonPairing)
 algList.append(IsolatedPhotonTagging)
 algList.append(MyFastJetProcessor)
+algList.append(MyLCIOOutputProcessor)
 
 from Configurables import ApplicationMgr
 
