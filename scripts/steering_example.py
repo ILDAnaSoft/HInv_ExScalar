@@ -29,18 +29,6 @@ geoSvc.EnableGeant4Geo = False
 geoSvc.detectors = [CompactFile]
 svcList.append(geoSvc)
 
-MyFastJetProcessor = MarlinProcessorWrapper("MyFastJetProcessor")
-MyFastJetProcessor.OutputLevel = DEBUG
-MyFastJetProcessor.ProcessorType = "FastJetProcessor"
-MyFastJetProcessor.Parameters = {
-    "algorithm": ["kt_algorithm", "1.3"],
-    "clusteringMode": ["ExclusiveNJets", "4"],
-    "jetOut": ["FastJets4_Precluster"],
-    "recParticleIn": ["PandoraPFOs"],
-    "recParticleOut": ["RefinedJets"],
-    "recombinationScheme": ["E_scheme"],
-    "storeParticlesInJets": ["true"],
-}
 
 MyIsolatedLeptonTaggingProcessor = MarlinProcessorWrapper("MyIsolatedLeptonTaggingProcessor")
 MyIsolatedLeptonTaggingProcessor.OutputLevel = DEBUG
@@ -100,10 +88,23 @@ IsolatedPhotonTagging.Parameters = {
     "OutputIsoPhotonsCollection": ["IsolatedPhotons"],
 }
 
-algList.append(MyFastJetProcessor)
+MyFastJetProcessor = MarlinProcessorWrapper("MyFastJetProcessor")
+MyFastJetProcessor.OutputLevel = DEBUG
+MyFastJetProcessor.ProcessorType = "FastJetProcessor"
+MyFastJetProcessor.Parameters = {
+    "algorithm": ["kt_algorithm", "1.3"],
+    "clusteringMode": ["ExclusiveNJets", "4"],
+    "jetOut": ["FastJets4_Precluster"],
+    "recParticleIn": ["PandoraPFOs"],
+    "recParticleOut": ["RefinedJets"],
+    "recombinationScheme": ["E_scheme"],
+    "storeParticlesInJets": ["true"],
+}
+
 algList.append(MyIsolatedLeptonTaggingProcessor)
-algList.append(IsolatedPhotonTagging)
 algList.append(MyLeptonPairing)
+algList.append(IsolatedPhotonTagging)
+algList.append(MyFastJetProcessor)
 
 from Configurables import ApplicationMgr
 
