@@ -1,4 +1,6 @@
-# ILDatFCCAnalyses
+# H->Invisible & Extra Scalar Analyses
+
+This repository contains shared code of the Higgs->Invisible and Extra Scalar analyses.
 
 ## Formatting
 
