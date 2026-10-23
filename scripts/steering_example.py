@@ -118,4 +118,4 @@ algList.append(MyLCIOOutputProcessor)
 
 from Configurables import ApplicationMgr
 
-ApplicationMgr(TopAlg=algList, EvtSel="NONE", EvtMax=10, ExtSvc=svcList, OutputLevel=DEBUG)
+ApplicationMgr(TopAlg=algList, EvtSel="NONE", EvtMax=10, ExtSvc=svcList, OutputLevel=INFO)
