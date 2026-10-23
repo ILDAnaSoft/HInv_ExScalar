@@ -65,7 +65,7 @@ MyIsolatedLeptonTaggingProcessor.Parameters = {
 
 MyLeptonPairing = MarlinProcessorWrapper("MyLeptonPairing")
 MyLeptonPairing.OutputLevel = DEBUG
-MyLeptonPairing.ProcessorType = "LeptonPairing"
+MyLeptonPairing.ProcessorType = "LeptonPairing" # located in ILDAnaSoft/ZHH
 MyLeptonPairing.Parameters = {
     "ISOLeptons": ["ISOLeptons"],
     "LeptonPair": ["LeptonPair"],
@@ -111,7 +111,7 @@ MyLCIOOutputProcessor.Parameters = {
 }
 
 algList.append(MyIsolatedLeptonTaggingProcessor)
-algList.append(MyLeptonPairing)
+# algList.append(MyLeptonPairing) # located in ILDAnaSoft/ZHH
 algList.append(IsolatedPhotonTagging)
 algList.append(MyFastJetProcessor)
 algList.append(MyLCIOOutputProcessor)
