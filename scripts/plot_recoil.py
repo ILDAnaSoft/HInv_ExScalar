@@ -14,25 +14,18 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from samples import FCCEE, ILC, Sample, parse_sample
+
 PROCESS_LABELS = {
     "e2e2h_inv": r"$ZH \to \mu\mu + H_\mathrm{inv}$",
     "4f_mumununu": r"$\mu\mu\nu\nu$",
 }
 
 
-def describe(fname):
-    """Parse e.g. E240-FCCee_PB_noISR.Pe2e2h_inv.Gwhizard-3_1_5.eU.pU.I403001.0_recoil.npz"""
-    tokens = osp.basename(fname).split(".")
-    setup, process = tokens[0], tokens[1][1:]
-    energy, machine = setup.split("-", 1)
-    collider = "FCC-ee" if machine.startswith("FCCee") else "ILC"
-    isr = not machine.endswith("_noISR")
-    return dict(
-        process=process,
-        collider=collider,
-        isr=isr,
-        label=f"{PROCESS_LABELS.get(process, process)}, ILD@{collider} {energy[1:]} GeV"
-        + ("" if isr else ", no ISR"),
+def label(sample: Sample) -> str:
+    return (
+        f"{PROCESS_LABELS.get(sample.process, sample.process)}, "
+        f"ILD@{sample.collider} {sample.energy} GeV" + ("" if sample.isr else ", no ISR")
     )
 
 
@@ -43,15 +36,15 @@ def main(in_dir, output):
 
     bins = np.linspace(100, 160, 121)
     colors = {
-        ("e2e2h_inv", "ILC"): "C0",
-        ("e2e2h_inv", "FCC-ee"): "C1",
-        ("4f_mumununu", "ILC"): "C2",
-        ("4f_mumununu", "FCC-ee"): "C3",
+        ("e2e2h_inv", ILC): "C0",
+        ("e2e2h_inv", FCCEE): "C1",
+        ("4f_mumununu", ILC): "C2",
+        ("4f_mumununu", FCCEE): "C3",
     }
 
     fig, ax = plt.subplots(figsize=(9, 6))
     for f in files:
-        d = describe(f)
+        sample = parse_sample(f)
         data = np.load(f)
         m = data["m_recoil"][data["has_pair"]]
         ax.hist(
@@ -59,9 +52,9 @@ def main(in_dir, output):
             bins=bins,
             histtype="step",
             lw=1.5,
-            color=colors.get((d["process"], d["collider"])),
-            ls="-" if d["isr"] else "--",
-            label=f"{d['label']} ({len(m)} ev.)",
+            color=colors.get((sample.process, sample.collider)),
+            ls="-" if sample.isr else "--",
+            label=f"{label(sample)} ({len(m)} ev.)",
         )
 
     ax.axvline(125.0, color="grey", lw=0.8, ls=":")
