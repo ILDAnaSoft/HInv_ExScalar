@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Usage: run_sgv <input.slcio|input.stdhep> <detector_geo.inp> <output.slcio> [steering_file]
+# Optional env overrides: MAXEV, CMS_ENE, CROSSING_ANGLE, DETECTOR, SGV_DIR
+set -euo pipefail
+
+[[ $# -lt 3 ]] && { echo "Usage: $0 <input> <geometry.inp> <output.slcio> [steering]"; exit 1; }
+
+SGV_DIR=${SGV_DIR:-/data/dust/user/schwanvl/promotion/code/SGV_install/sgv}
+IN=$(realpath "$1"); GEO=$(realpath "$2"); OUT=$(realpath -m "$3")
+STEER=$(realpath "${4:-$SGV_DIR/tests/sgv.steer}")
+
+case "$IN" in
+  *.slcio|*.lcio) TYPE=LCIO;  LINK=input.slcio ;;
+  *.stdhep)       TYPE=STDH;  LINK=input.stdhep ;;
+  *) echo "Unknown input type: $IN"; exit 1 ;;
+esac
+
+WORK=$(mktemp -d "$(dirname "$OUT")/TMP-sgv-XXXXXX")
+cd "$WORK"
+# SGV is linked against LCIO/ROOT of this key4hep release
+set +u
+[[ -z "${KEY4HEP_STACK:-}" ]] && source /cvmfs/sw.hsf.org/key4hep/setup.sh -r 2026-04-08 > /dev/null
+source "$SGV_DIR/sgvenv.sh"
+set -u
+cp -R "$SGV_DIR/tests/." .
+
+# replace symlinks copied from tests/ so the originals are never touched
+rm -f fort.17 fort.51 input.slcio input.stdhep
+ln -s "$GEO" fort.51          # detector geometry is read from Fortran unit 51
+ln -s "$IN"  "$LINK"
+
+# steering is read from unit 17; patch the relevant keys
+sed -e "s|^\( *\)GENERATOR_INPUT_TYPE *=.*|\1GENERATOR_INPUT_TYPE = '$TYPE'|" \
+    -e "s|^\( *\)INPUT_FILENAMES *=.*|\1INPUT_FILENAMES = '$LINK'|" \
+    -e "s|^\( *\)FILENAME *=.*|\1FILENAME = 'sgvout.slcio'|" \
+    ${MAXEV:+-e "s|^\( *\)MAXEV *=.*|\1MAXEV = $MAXEV|"} \
+    ${CMS_ENE:+-e "s|^\( *\)CMS_ENE *=.*|\1CMS_ENE = $CMS_ENE|"} \
+    ${CROSSING_ANGLE:+-e "s|^\( *\)CROSSING_ANGLE *=.*|\1CROSSING_ANGLE = $CROSSING_ANGLE|"} \
+    ${DETECTOR:+-e "s|^[! ]*DETECTOR *=.*|  DETECTOR = '$DETECTOR'|"} \
+    "$STEER" > fort.17
+
+echo "Starting SGV at $(date) in $WORK"
+./usesgvlcio.exe
+mv sgvout.slcio "$OUT"
+echo "Done: $OUT  (work dir kept: $WORK)"
