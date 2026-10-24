@@ -6,7 +6,10 @@ set -eo pipefail
 
 [[ $# -ne 1 ]] && { echo "Usage: $0 <work_dir>"; exit 1; }
 
-SGV_DIR=${SGV_DIR:-/data/dust/user/schwanvl/promotion/code/SGV_install/sgv}
+if [[ -z "${SGV_DIR:-}" ]]; then
+    [[ -z "${codeDir:-}" ]] && { echo "Error: neither \$SGV_DIR nor \$codeDir is set (SGV is expected in \$codeDir/SGV_install/sgv)." >&2; exit 1; }
+    SGV_DIR=$codeDir/SGV_install/sgv
+fi
 
 # SGV is linked against LCIO/ROOT of this key4hep release
 [[ -z "${KEY4HEP_STACK:-}" ]] && source /cvmfs/sw.hsf.org/key4hep/setup.sh -r 2026-04-08 > /dev/null

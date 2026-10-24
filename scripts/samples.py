@@ -11,10 +11,9 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from paths import sgv_dir
+
 REPO_DIR = Path(__file__).resolve().parent.parent
-SGV_DIR = Path(
-    os.environ.get("SGV_DIR", "/data/dust/user/schwanvl/promotion/code/SGV_install/sgv")
-)
 
 ILC = "ILC"
 FCCEE = "FCC-ee"
@@ -65,7 +64,7 @@ def collider_settings(sample: Sample, ild_fcc_version: int = 1) -> ColliderSetti
         settings = ColliderSettings(
             cms_energy=float(sample.energy),
             crossing_angle=0.007,  # 14 mrad full crossing angle
-            sgv_geometry=SGV_DIR / "tests/sgv_geo.inp",
+            sgv_geometry=sgv_dir() / "tests/sgv_geo.inp",
             detector_model="ILD_l5_o1_v02",
         )
 

@@ -5,8 +5,9 @@ Single file, settings given explicitly:
         [--cms-energy E] [--crossing-angle A] [--detector NAME] [--steering FILE]
 
 All files of a directory, settings chosen per collider (see samples.py):
-    python sgv.py batch <input_dir> <output_dir> [--jobs N] [--ild-fcc-version {1,2}]
+    python sgv.py batch [<input_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}]
         [--max-events N] [--steering FILE]
+    Directories default to $dtDir/<WHIZARD_SUBDIR> and $dtDir/<SGV_SUBDIR> (see paths.py).
 
 Each job runs in its own work directory next to the output, because SGV reads and writes
 fixed file names in its CWD. The environment (key4hep, sgvenv.sh) is set up by run_sgv.
@@ -24,11 +25,11 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 from pathlib import Path
 
-from samples import SGV_DIR, collider_settings, parse_sample
+from paths import SGV_SUBDIR, WHIZARD_SUBDIR, data_dir, sgv_dir
+from samples import collider_settings, parse_sample
 from sgv_steering import merge_options
 
 RUN_SGV = Path(__file__).resolve().parent / "run_sgv"
-DEFAULT_STEERING = SGV_DIR / "tests/sgv.steer"
 SGV_OUTPUT = "sgvout.slcio"  # set via analysis_steering.FILENAME
 
 # input extension -> (GENERATOR_INPUT_TYPE, name of the link SGV reads)
@@ -60,7 +61,7 @@ def prepare_workdir(
 ) -> None:
     generator_type, input_link = INPUT_TYPES[input_file.suffix]
 
-    shutil.copytree(SGV_DIR / "tests", work, symlinks=True, dirs_exist_ok=True)
+    shutil.copytree(sgv_dir() / "tests", work, symlinks=True, dirs_exist_ok=True)
 
     # replace symlinks copied from tests/ so the originals are never touched
     for name in ("fort.17", "fort.51", "input.slcio", "input.stdhep", SGV_OUTPUT):
@@ -83,11 +84,15 @@ def run_sgv(
     geometry: Path,
     output: Path,
     options: dict,
-    steering: Path = DEFAULT_STEERING,
+    steering: Path | None = None,
     log: Path | None = None,
     keep_workdir: bool = False,
 ) -> bool:
-    """Runs SGV on one file. Output (and log) go to the given paths; returns success."""
+    """Runs SGV on one file. Output (and log) go to the given paths; returns success.
+
+    The steering defaults to $SGV_DIR/tests/sgv.steer.
+    """
+    steering = steering or sgv_dir() / "tests/sgv.steer"
     input_file, geometry, steering = (p.resolve() for p in (input_file, geometry, steering))
     output = output.resolve()
     missing = [p for p in (input_file, geometry, steering) if not p.is_file()]
@@ -104,7 +109,7 @@ def run_sgv(
             [str(RUN_SGV), str(work)],
             stdout=stream,
             stderr=subprocess.STDOUT,
-            env={**os.environ, "SGV_DIR": str(SGV_DIR)},
+            env={**os.environ, "SGV_DIR": str(sgv_dir())},
             check=False,  # failures are reported via returncode below
         )
 
@@ -129,22 +134,24 @@ def run_batch(
     jobs: int,
     ild_fcc_version: int,
     max_events: int | None,
-    steering: Path,
+    steering: Path | None,
 ) -> bool:
     inputs = sorted(f for f in in_dir.iterdir() if f.suffix in INPUT_TYPES)
     if not inputs:
         sys.exit(f"No generator files found in {in_dir}")
-    out_dir.mkdir(parents=True, exist_ok=True)
 
+    # resolve all settings before starting any job, so configuration errors abort early
+    planned = []
+    for f in inputs:
+        try:
+            planned.append((f, collider_settings(parse_sample(f), ild_fcc_version)))
+        except ValueError as e:
+            print(f"Skipping {f.name}: {e}")
+
+    out_dir.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(max_workers=jobs) as executor:
         futures = {}
-        for f in inputs:
-            try:
-                settings = collider_settings(parse_sample(f), ild_fcc_version)
-            except ValueError as e:
-                print(f"Skipping {f.name}: {e}")
-                continue
-
+        for f, settings in planned:
             print(f"{f.name}: {settings.detector_model}, {settings.sgv_geometry.name}")
             options = steering_options(
                 max_events,
@@ -184,16 +191,18 @@ def main() -> int:
     run.add_argument("--keep-workdir", action="store_true")
 
     batch = sub.add_parser("batch", help="Run SGV on all files of a directory")
-    batch.add_argument("input_dir", type=Path)
-    batch.add_argument("output_dir", type=Path)
+    batch.add_argument("input_dir", type=Path, nargs="?", help=f"Default: $dtDir/{WHIZARD_SUBDIR}")
+    batch.add_argument("output_dir", type=Path, nargs="?", help=f"Default: $dtDir/{SGV_SUBDIR}")
     batch.add_argument("--jobs", type=int, default=8, help="Parallel jobs (default: 8)")
     batch.add_argument("--ild-fcc-version", type=int, choices=(1, 2), default=1)
 
     for p in (run, batch):
         p.add_argument("--max-events", type=int, help="Default: all events")
-        p.add_argument("--steering", type=Path, default=DEFAULT_STEERING)
+        p.add_argument("--steering", type=Path, help="Default: $SGV_DIR/tests/sgv.steer")
 
     args = parser.parse_args()
+    # resolve paths from env vars before any job starts (exits with a message if unset)
+    steering = args.steering or sgv_dir() / "tests/sgv.steer"
 
     if args.command == "run":
         options = steering_options(
@@ -204,17 +213,17 @@ def main() -> int:
             args.geometry,
             args.output,
             options,
-            args.steering,
+            steering,
             keep_workdir=args.keep_workdir,
         )
     else:
         ok = run_batch(
-            args.input_dir,
-            args.output_dir,
+            args.input_dir or data_dir() / WHIZARD_SUBDIR,
+            args.output_dir or data_dir() / SGV_SUBDIR,
             args.jobs,
             args.ild_fcc_version,
             args.max_events,
-            args.steering,
+            steering,
         )
     return 0 if ok else 1
 
