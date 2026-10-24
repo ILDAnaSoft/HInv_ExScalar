@@ -4,7 +4,8 @@ The detector model is chosen per collider (see samples.py). Requires a sourced k
 stack (the one SGV and LeptonPairing were built with).
 
 Usage:
-    python reco.py <sgv_dir> <output_dir> [--jobs N] [--ild-fcc-version {1,2}] [--n-events N]
+    python reco.py [<sgv_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}] [--n-events N]
+    Directories default to $dtDir/<SGV_SUBDIR> and $dtDir/<RECO_SUBDIR> (see paths.py).
 """
 
 from __future__ import annotations
@@ -18,11 +19,10 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from paths import RECO_SUBDIR, SGV_SUBDIR, data_dir, lepton_pairing_lib
 from samples import collider_settings, parse_sample
 
 STEERING = Path(__file__).resolve().parent / "steering_llrecoil.py"
-CODE_DIR = Path(os.environ.get("codeDir", "/data/dust/user/schwanvl/promotion/code"))
-LEPTON_PAIRING_LIB = CODE_DIR / "ZHH/source/LeptonPairing/lib/libLeptonPairing.so"
 
 
 def run_reco(
@@ -68,8 +68,8 @@ def run_reco(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("sgv_dir", type=Path)
-    parser.add_argument("output_dir", type=Path)
+    parser.add_argument("sgv_dir", type=Path, nargs="?", help=f"Default: $dtDir/{SGV_SUBDIR}")
+    parser.add_argument("output_dir", type=Path, nargs="?", help=f"Default: $dtDir/{RECO_SUBDIR}")
     parser.add_argument("--jobs", type=int, default=8, help="Parallel jobs (default: 8)")
     parser.add_argument("--ild-fcc-version", type=int, choices=(1, 2), default=1)
     parser.add_argument("--n-events", type=int, default=-1, help="Default: all events")
@@ -77,18 +77,17 @@ def main() -> int:
 
     if "KEY4HEP_STACK" not in os.environ or shutil.which("k4run") is None:
         sys.exit("key4hep is not set up: source /cvmfs/sw.hsf.org/key4hep/setup.sh -r 2026-04-08")
-    if not LEPTON_PAIRING_LIB.is_file():
-        sys.exit(f"LeptonPairing library not found: {LEPTON_PAIRING_LIB}")
+    lib = lepton_pairing_lib()
+    if not lib.is_file():
+        sys.exit(f"LeptonPairing library not found: {lib}")
 
-    env = {
-        **os.environ,
-        "MARLIN_DLL": f"{LEPTON_PAIRING_LIB}:{os.environ.get('MARLIN_DLL', '')}",
-    }
+    env = {**os.environ, "MARLIN_DLL": f"{lib}:{os.environ.get('MARLIN_DLL', '')}"}
 
-    inputs = sorted(args.sgv_dir.resolve().glob("*.slcio"))
+    sgv_dir = (args.sgv_dir or data_dir() / SGV_SUBDIR).resolve()
+    inputs = sorted(sgv_dir.glob("*.slcio"))
     if not inputs:
-        sys.exit(f"No .slcio files found in {args.sgv_dir}")
-    output_dir = args.output_dir.resolve()
+        sys.exit(f"No .slcio files found in {sgv_dir}")
+    output_dir = (args.output_dir or data_dir() / RECO_SUBDIR).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:

@@ -7,12 +7,15 @@ and any crossing-angle boost applied by SGV, so the recoil is computed in the
 correct frame for both ILC and FCC-ee files.
 
 Usage (key4hep sourced):
-    python extract_recoil.py <reco.slcio> [<reco.slcio> ...]
+    python extract_recoil.py [<reco.slcio> ...]
+    Without arguments, all .slcio files in $dtDir/<RECO_SUBDIR> (see paths.py) are processed.
 """
 
 import sys
 import numpy as np
 from pyLCIO import IOIMPL
+
+from paths import RECO_SUBDIR, data_dir
 
 
 def four_vector(p):
@@ -73,5 +76,8 @@ def process_file(path):
 
 
 if __name__ == "__main__":
-    for f in sys.argv[1:]:
+    files = sys.argv[1:] or sorted(str(f) for f in (data_dir() / RECO_SUBDIR).glob("*.slcio"))
+    if not files:
+        sys.exit("No input files given or found")
+    for f in files:
         process_file(f)

@@ -1,7 +1,8 @@
 """Plot the di-lepton recoil mass (reconstructed Higgs mass) of all samples in one figure.
 
 Usage:
-    python plot_recoil.py <dir with *_recoil.npz> [output.pdf]
+    python plot_recoil.py [<dir with *_recoil.npz>] [output.pdf]
+    The directory defaults to $dtDir/<RECO_SUBDIR> (see paths.py).
 """
 
 import sys
@@ -14,6 +15,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from paths import RECO_SUBDIR, data_dir
 from samples import FCCEE, ILC, Sample, parse_sample
 
 PROCESS_LABELS = {
@@ -70,6 +72,6 @@ def main(in_dir, output):
 
 
 if __name__ == "__main__":
-    in_dir = sys.argv[1]
+    in_dir = sys.argv[1] if len(sys.argv) > 1 else str(data_dir() / RECO_SUBDIR)
     output = sys.argv[2] if len(sys.argv) > 2 else osp.join(in_dir, "recoil_mass.pdf")
     main(in_dir, output)
