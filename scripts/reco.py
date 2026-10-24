@@ -52,6 +52,7 @@ def run_reco(
             stdout=stream,
             stderr=subprocess.STDOUT,
             env=env,
+            check=False,  # failures are reported via returncode below
         )
 
     if result.returncode != 0 or not Path(f"{output_base}.slcio").exists():
