@@ -105,6 +105,7 @@ def run_sgv(
             stdout=stream,
             stderr=subprocess.STDOUT,
             env={**os.environ, "SGV_DIR": str(SGV_DIR)},
+            check=False,  # failures are reported via returncode below
         )
 
     produced = work / SGV_OUTPUT
