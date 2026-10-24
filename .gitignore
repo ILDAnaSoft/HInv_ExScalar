@@ -234,3 +234,11 @@ pyrightconfig.json
 .claude/
 .codex/
 .aider.*
+
+######################################################################
+### HInv_ExScalar-specific ignores (not part of key4hep-dev-utils) ###
+### Keep this block at the end when updating the template          ###
+######################################################################
+*.slcio
+*.root
+*.npz
