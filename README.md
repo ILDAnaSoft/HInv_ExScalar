@@ -2,6 +2,13 @@
 
 This repository contains shared code of the Higgs->Invisible and Extra Scalar analyses.
 
+## Dependencies
+
+`scripts/steering_llrecoil.py` uses the `LeptonPairingCombined` processor from [ILDAnaSoft/ZHH](https://github.com/ILDAnaSoft/ZHH) (`source/LeptonPairing`, add `lib/libLeptonPairing.so` to `MARLIN_DLL`).
+
+> [!WARNING]
+> Until the ZHH branches `fix/leptonpairingcombined` and `fix/leptonpairing-defaults` are merged, build `libLeptonPairing.so` from a branch containing both (locally: `hinv/local`). Afterwards, rebuild from ZHH `main` and remove this note.
+
 ## Formatting
 
 > [!IMPORTANT]
