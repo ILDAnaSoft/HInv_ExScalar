@@ -1,5 +1,8 @@
 """Isolated lepton tagging + lepton pairing for the ZH -> ll + X recoil analysis.
 
+Isolated muons and electrons are tagged in two passes (muons first, electrons on the remaining
+PFOs) and paired by LeptonPairingCombined, as in ZHH's scripts/prod_reco.xml.
+
 Usage:
     MARLIN_DLL=$codeDir/ZHH/source/LeptonPairing/lib/libLeptonPairing.so:$MARLIN_DLL \
     k4run steering_llrecoil.py --inputFiles in.slcio --outputBase out/name \
@@ -55,44 +58,67 @@ geoSvc.EnableGeant4Geo = False
 geoSvc.detectors = [CompactFile]
 svcList.append(geoSvc)
 
-MyIsolatedLeptonTaggingProcessor = MarlinProcessorWrapper("MyIsolatedLeptonTaggingProcessor")
-MyIsolatedLeptonTaggingProcessor.OutputLevel = INFO
-MyIsolatedLeptonTaggingProcessor.ProcessorType = "IsolatedLeptonTaggingProcessor"
-MyIsolatedLeptonTaggingProcessor.Parameters = {
-    "CosConeLarge": ["0.95"],
-    "CosConeSmall": ["0.98"],
-    "CutOnTheISOElectronMVA": ["0.5"],
-    "CutOnTheISOMuonMVA": ["0.7"],
-    "DirOfISOElectronWeights": [
-        "/cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-02/MarlinReco/v01-31/Analysis/IsolatedLeptonTagging/example/isolated_electron_weights"
-    ],
-    "DirOfISOMuonWeights": [
-        "/cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-02/MarlinReco/v01-31/Analysis/IsolatedLeptonTagging/example/isolated_muon_weights_woYoke"
-    ],
-    "InputPandoraPFOsCollection": [PFOCollection],
-    "InputPrimaryVertexCollection": ["PrimaryVertex"],
-    "IsSelectingOneIsoLep": ["false"],
-    "MaxD0SigForElectron": ["50"],
-    "MaxD0SigForMuon": ["20"],
-    "MaxEOverPForElectron": ["1.3"],
-    "MaxEOverPForMuon": ["0.3"],
-    "MaxZ0SigForElectron": ["50"],
-    "MaxZ0SigForMuon": ["20"],
-    "MinEOverPForElectron": ["0.5"],
-    "MinEecalOverTotEForElectron": ["0.9"],
-    "MinEyokeForMuon": ["1.2"],
-    "MinPForElectron": ["5"],
-    "MinPForMuon": ["5"],
-    "OutputIsoLeptonsCollection": ["ISOLeptons"],
-    "OutputPFOsWithoutIsoLepCollection": ["PandoraPFOsWithoutIsoLep"],
-    "UseYokeForMuonID": ["false"],
-}
+ISOLEP_WEIGHTS_DIR = "/cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-02/MarlinReco/v01-31/Analysis/IsolatedLeptonTagging/example"
+MVA_CUT_DISABLED = "2"  # the MVA output is at most 1, so this cut rejects all candidates
+
+
+def isolated_lepton_tagging(name, input_pfos, output_isoleps, output_pfos, muon_cut, electron_cut):
+    proc = MarlinProcessorWrapper(name)
+    proc.OutputLevel = INFO
+    proc.ProcessorType = "IsolatedLeptonTaggingProcessor"
+    proc.Parameters = {
+        "CosConeLarge": ["0.95"],
+        "CosConeSmall": ["0.98"],
+        "CutOnTheISOElectronMVA": [electron_cut],
+        "CutOnTheISOMuonMVA": [muon_cut],
+        "DirOfISOElectronWeights": [f"{ISOLEP_WEIGHTS_DIR}/isolated_electron_weights"],
+        "DirOfISOMuonWeights": [f"{ISOLEP_WEIGHTS_DIR}/isolated_muon_weights_woYoke"],
+        "InputPandoraPFOsCollection": [input_pfos],
+        "InputPrimaryVertexCollection": ["PrimaryVertex"],
+        "IsSelectingOneIsoLep": ["false"],
+        "MaxD0SigForElectron": ["50"],
+        "MaxD0SigForMuon": ["20"],
+        "MaxEOverPForElectron": ["1.3"],
+        "MaxEOverPForMuon": ["0.3"],
+        "MaxZ0SigForElectron": ["50"],
+        "MaxZ0SigForMuon": ["20"],
+        "MinEOverPForElectron": ["0.5"],
+        "MinEecalOverTotEForElectron": ["0.9"],
+        "MinEyokeForMuon": ["1.2"],
+        "MinPForElectron": ["5"],
+        "MinPForMuon": ["5"],
+        "OutputIsoLeptonsCollection": [output_isoleps],
+        "OutputPFOsWithoutIsoLepCollection": [output_pfos],
+        "UseYokeForMuonID": ["false"],
+    }
+    return proc
+
+
+MyIsolatedMuonTagging = isolated_lepton_tagging(
+    "MyIsolatedMuonTagging",
+    input_pfos=PFOCollection,
+    output_isoleps="ISOMuons",
+    output_pfos="PandoraPFOsWithoutIsoMuons",
+    muon_cut="0.7",
+    electron_cut=MVA_CUT_DISABLED,
+)
+MyIsolatedElectronTagging = isolated_lepton_tagging(
+    "MyIsolatedElectronTagging",
+    input_pfos="PandoraPFOsWithoutIsoMuons",
+    output_isoleps="ISOElectrons",
+    output_pfos="PandoraPFOsWithoutIsoLep",
+    muon_cut=MVA_CUT_DISABLED,
+    electron_cut="0.5",
+)
 
 MyLeptonPairing = MarlinProcessorWrapper("MyLeptonPairing")
-MyLeptonPairing.OutputLevel = INFO
-MyLeptonPairing.ProcessorType = "LeptonPairing"  # located in ILDAnaSoft/ZHH
+# WARNING: LeptonPairingCombined prints a MESSAGE for every event without tau collection
+MyLeptonPairing.OutputLevel = WARNING
+MyLeptonPairing.ProcessorType = "LeptonPairingCombined"  # located in ILDAnaSoft/ZHH
 MyLeptonPairing.Parameters = {
-    "IsoLepCollection": ["ISOLeptons"],
+    "IsoElectronCollection": ["ISOElectrons"],
+    "IsoMuonCollection": ["ISOMuons"],
+    "IsoTauCollection": ["ISOTaus"],  # optional, ignored if not present
     "PFOsWOIsoLepCollection": ["PandoraPFOsWithoutIsoLep"],
     "LepPairCollection": ["LeptonPair"],
     "PFOsWOLepPairCollection": ["PandoraPFOsWithoutLepPair"],
@@ -114,7 +140,8 @@ MyLCIOOutputProcessor.Parameters = {
     "LCIOWriteMode": ["WRITE_NEW"],
 }
 
-algList.append(MyIsolatedLeptonTaggingProcessor)
+algList.append(MyIsolatedMuonTagging)
+algList.append(MyIsolatedElectronTagging)
 algList.append(MyLeptonPairing)
 algList.append(MyLCIOOutputProcessor)
 
