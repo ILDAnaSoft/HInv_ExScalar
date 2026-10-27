@@ -128,6 +128,19 @@ def run_sgv(
     return True
 
 
+def generator_files(in_dir: Path) -> list[Path]:
+    """Generator files directly in in_dir and in sub-directories named like a sample
+    (e.g. E250-SetA.P2f_mumu.eL.pR.I403003/), so that folders like validation/ are skipped."""
+    dirs = [in_dir]
+    for d in sorted(p for p in in_dir.iterdir() if p.is_dir()):
+        try:
+            parse_sample(d)
+            dirs.append(d)
+        except ValueError:
+            print(f"Skipping directory {d.name}: not a sample")
+    return sorted(f for d in dirs for f in d.iterdir() if f.suffix in INPUT_TYPES)
+
+
 def run_batch(
     in_dir: Path,
     out_dir: Path,
@@ -136,7 +149,7 @@ def run_batch(
     max_events: int | None,
     steering: Path | None,
 ) -> bool:
-    inputs = sorted(f for f in in_dir.iterdir() if f.suffix in INPUT_TYPES)
+    inputs = generator_files(in_dir)
     if not inputs:
         sys.exit(f"No generator files found in {in_dir}")
 
