@@ -20,10 +20,12 @@ ENV_DESCRIPTIONS = {
     "dtDir": "the data directory (generator files, SGV and reco outputs)",
 }
 
-# default data sub-directories below $dtDir
-WHIZARD_SUBDIR = "2026-10-whizard"
-SGV_SUBDIR = "2026-10-sgv"
-RECO_SUBDIR = "2026-10-reco"
+# default data sub-directories below $dtDir; each production run gets its own dated
+# sub-directory, so outputs of different inputs/runs are never mixed
+RUN = "2026-10-27"
+WHIZARD_SUBDIR = f"2026-10-whizard/{RUN}"
+SGV_SUBDIR = f"2026-10-sgv/{RUN}"
+RECO_SUBDIR = f"2026-10-reco/{RUN}"
 
 
 def env_dir(name: str) -> Path:
