@@ -1,10 +1,11 @@
-"""Run steering_llrecoil.py (k4run) on all SGV output files of a directory.
+"""Run steering/llrecoil.py (k4run) on all SGV output files of a directory.
 
 The detector model is chosen per collider (see samples.py). Requires a sourced key4hep
 stack (the one SGV and LeptonPairing were built with).
 
 Usage:
-    python reco.py [<sgv_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}] [--n-events N]
+    python -m hinv.reco.reco [<sgv_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}]
+        [--n-events N]
     Directories default to $dtDir/<SGV_SUBDIR> and $dtDir/<RECO_SUBDIR> (see paths.py).
 """
 
@@ -19,10 +20,10 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from paths import RECO_SUBDIR, SGV_SUBDIR, data_dir, lepton_pairing_lib
-from samples import collider_settings, parse_sample
+from hinv.paths import RECO_SUBDIR, SGV_SUBDIR, data_dir, lepton_pairing_lib
+from hinv.samples import collider_settings, parse_sample
 
-STEERING = Path(__file__).resolve().parent / "steering_llrecoil.py"
+STEERING = Path(__file__).resolve().parents[2] / "steering/llrecoil.py"
 
 
 def run_reco(

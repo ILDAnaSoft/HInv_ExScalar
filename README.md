@@ -2,9 +2,32 @@
 
 This repository contains shared code of the Higgs->Invisible and Extra Scalar analyses.
 
+## Layout
+
+| Path              | Content                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `hinv/`           | Python package: shared `paths.py` (from `$codeDir`/`$dtDir`) and `samples.py` (sample names, collider settings, runs) |
+| `hinv/sim/`       | SGV fast simulation                                                                                                   |
+| `hinv/reco/`      | Lepton tagging + pairing with `k4run`                                                                                 |
+| `hinv/ana/`       | Observables, weighted datasets, plots                                                                                 |
+| `steering/`       | Gaudi steering files (run with `k4run`, not imported)                                                                 |
+| `sgv_geometries/` | SGV geometries of ILD@FCC                                                                                             |
+
+## Usage
+
+```bash
+source setup.sh  # adds the repository to PYTHONPATH
+python -m hinv.sim.sgv batch  # $dtDir/<WHIZARD_SUBDIR> -> $dtDir/<SGV_SUBDIR>
+python -m hinv.reco.reco  # -> $dtDir/<RECO_SUBDIR>
+python -m hinv.ana.extract_observables
+python -m hinv.ana.control_plots
+```
+
+Default sub-directories are set in `hinv/paths.py`; every script has `--help`.
+
 ## Dependencies
 
-`scripts/steering_llrecoil.py` uses the `LeptonPairingCombined` processor from [ILDAnaSoft/ZHH](https://github.com/ILDAnaSoft/ZHH) (`source/LeptonPairing`, add `lib/libLeptonPairing.so` to `MARLIN_DLL`).
+`steering/llrecoil.py` uses the `LeptonPairingCombined` processor from [ILDAnaSoft/ZHH](https://github.com/ILDAnaSoft/ZHH) (`source/LeptonPairing`, add `lib/libLeptonPairing.so` to `MARLIN_DLL`).
 
 > [!WARNING]
 > Until the ZHH branches `fix/leptonpairingcombined` and `fix/leptonpairing-defaults` are merged, build `libLeptonPairing.so` from a branch containing both (locally: `hinv/local`). Afterwards, rebuild from ZHH `main` and remove this note.

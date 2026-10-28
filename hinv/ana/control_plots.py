@@ -4,7 +4,7 @@ Backgrounds are stacked, the signal (BR(H->inv) = 100 %) is drawn as a line on t
 with a mu+mu- pair are shown (preselection of the muon channel). Also prints the expected yields.
 
 Usage:
-    python control_plots.py [--runs ILC250_LR ILC250_RL FCCee240] [--out DIR]
+    python -m hinv.ana.control_plots [--runs ILC250_LR ILC250_RL FCCee240] [--out DIR]
     Plots default to $dtDir/<RECO_SUBDIR>/plots.
 """
 
@@ -19,9 +19,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from dataset import PROCESSES, SIGNAL, load_run
-from paths import RECO_SUBDIR, data_dir
-from samples import RUNS
+from hinv.ana.dataset import PROCESSES, SIGNAL, load_run
+from hinv.paths import RECO_SUBDIR, data_dir
+from hinv.samples import RUNS
 
 INK = "#1b1b1a"
 MUTED = "#6b6a63"

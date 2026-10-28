@@ -1,5 +1,5 @@
 """Extract the per-event observables of the ZH -> ll + X recoil analysis from the output of
-steering_llrecoil.py and store them as <file>_obs.npz next to each input file.
+steering/llrecoil.py and store them as <file>_obs.npz next to each input file.
 
 The initial state is the sum of the two incoming beam particles (generator status 4) in
 MCParticlesSkimmed: nominal beam energy plus the crossing-angle boost applied by SGV. The
@@ -7,7 +7,7 @@ recoil mass is Lorentz invariant; all angles and transverse momenta are computed
 frame of this initial state, so that the crossing angle does not fake transverse momentum.
 
 Usage (key4hep sourced):
-    python extract_observables.py [--jobs N] [<reco.slcio> ...]
+    python -m hinv.ana.extract_observables [--jobs N] [<reco.slcio> ...]
     Without files, all .slcio files in $dtDir/<RECO_SUBDIR> (see paths.py) are processed.
 """
 
@@ -18,7 +18,7 @@ from multiprocessing import get_context
 
 import numpy as np
 
-from paths import RECO_SUBDIR, data_dir
+from hinv.paths import RECO_SUBDIR, data_dir
 
 # per-event observables; NaN where undefined (e.g. no lepton pair)
 OBSERVABLES = {

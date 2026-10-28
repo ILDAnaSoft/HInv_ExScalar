@@ -15,9 +15,9 @@ from pathlib import Path
 
 import numpy as np
 
-from extract_observables import OBSERVABLES
-from paths import RECO_SUBDIR, data_dir
-from samples import RUNS, parse_sample
+from hinv.ana.extract_observables import OBSERVABLES
+from hinv.paths import RECO_SUBDIR, data_dir
+from hinv.samples import RUNS, parse_sample
 
 SIGNAL = "e2e2h_inv"
 

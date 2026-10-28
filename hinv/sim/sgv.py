@@ -1,11 +1,11 @@
 """Run SGV fast simulation (usesgvlcio.exe) on LCIO/STDHEP generator files.
 
 Single file, settings given explicitly:
-    python sgv.py run <input> <geometry.inp> <output.slcio> [--max-events N]
+    python -m hinv.sim.sgv run <input> <geometry.inp> <output.slcio> [--max-events N]
         [--cms-energy E] [--crossing-angle A] [--detector NAME] [--steering FILE]
 
 All files of a directory, settings chosen per collider (see samples.py):
-    python sgv.py batch [<input_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}]
+    python -m hinv.sim.sgv batch [<input_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}]
         [--max-events N] [--steering FILE]
     Directories default to $dtDir/<WHIZARD_SUBDIR> and $dtDir/<SGV_SUBDIR> (see paths.py).
 
@@ -25,9 +25,9 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 from pathlib import Path
 
-from paths import SGV_SUBDIR, WHIZARD_SUBDIR, data_dir, sgv_dir
-from samples import collider_settings, parse_sample
-from sgv_steering import merge_options
+from hinv.paths import SGV_SUBDIR, WHIZARD_SUBDIR, data_dir, sgv_dir
+from hinv.samples import collider_settings, parse_sample
+from hinv.sim.sgv_steering import merge_options
 
 RUN_SGV = Path(__file__).resolve().parent / "run_sgv"
 SGV_OUTPUT = "sgvout.slcio"  # set via analysis_steering.FILENAME
