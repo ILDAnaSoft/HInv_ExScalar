@@ -12,7 +12,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from paths import sgv_dir
+from hinv.paths import sgv_dir
 
 REPO_DIR = Path(__file__).resolve().parent.parent
 

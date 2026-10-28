@@ -5,7 +5,7 @@ PFOs) and paired by LeptonPairingCombined, as in ZHH's scripts/prod_reco.xml.
 
 Usage:
     MARLIN_DLL=$codeDir/ZHH/source/LeptonPairing/lib/libLeptonPairing.so:$MARLIN_DLL \
-    k4run steering_llrecoil.py --inputFiles in.slcio --outputBase out/name \
+    k4run llrecoil.py --inputFiles in.slcio --outputBase out/name \
         [--nEvents N] [--detectorModel ILD_FCCee_v01]
 """
 
