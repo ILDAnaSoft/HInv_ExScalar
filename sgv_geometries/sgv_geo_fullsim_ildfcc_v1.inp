@@ -330,33 +330,35 @@ C V1
 C
 
 C Teresa: ECALENDCAP-MAT modified RMIN
+C RMIN 30 -> 25 cm: inner radius of the ECal endcap ring in k4geo ILD_FCCee_v01/v02
+C (EcalEndcapRing_FCCee_inner_radius), closes the gap to the LumiCal (107 mrad)
 
      LAYER : ECALENDCAP-MAT
-            GEOMETRY:  Z=250.5 , RMIN=30.0, RMAX=210.68
+            GEOMETRY:  Z=250.5 , RMIN=25.0, RMAX=210.68
             MATERIAL:    X0=0
             MEASUREMENT: CODE=10
       LAYER : ECALENDCAP-MAT
-            GEOMETRY:  Z=250.51 , RMIN=30.0, RMAX=210.68
+            GEOMETRY:  Z=250.51 , RMIN=25.0, RMAX=210.68
             MATERIAL:    X0=0.6, A=74
             MEASUREMENT: CODE=10
       LAYER : ECALENDCAP-MAT
          REPEAT : TIMES=3 , DELTA_Z=3.15
-            GEOMETRY:  Z=251.025 , RMIN=30.0, RMAX=210.68
+            GEOMETRY:  Z=251.025 , RMIN=25.0, RMAX=210.68
             MATERIAL:    X0=3.6, A=74
             MEASUREMENT: CODE=10
          ENDREPEAT :
       LAYER : ECALENDCAP-MAT
-            GEOMETRY:  Z=260.5 , RMIN=30.0, RMAX=210.68
+            GEOMETRY:  Z=260.5 , RMIN=25.0, RMAX=210.68
             MATERIAL:    X0=0.6,A=74
             MEASUREMENT: CODE=10
       LAYER : ECALENDCAP-MAT
          REPEAT : TIMES=3 , DELTA_R=2.205
-            GEOMETRY:  Z=260.8 , RMIN=30.0, RMAX=210.68
+            GEOMETRY:  Z=260.8 , RMIN=25.0, RMAX=210.68
             MATERIAL:    X0=3.6, A=74
             MEASUREMENT: CODE=10
          ENDREPEAT :
       LAYER : ECALENDCAP-MAT
-            GEOMETRY:  Z=268.2 , RMIN=30.0, RMAX=210.68
+            GEOMETRY:  Z=268.2 , RMIN=25.0, RMAX=210.68
             MATERIAL:    X0=0
             MEASUREMENT: CODE=10
 
@@ -463,7 +465,7 @@ TYPE: FORWARD_CALORIMETRY
 
 
      LAYER:ECALENDCAP
-         GEOMETRY:  Z=250.5, RMIN=30.0 , RMAX=210.68
+         GEOMETRY:  Z=250.5, RMIN=25.0 , RMAX=210.68
          MATERIAL:    X0=22.8 , A= 74, INTLEN=0.83
          MEASUREMENT: TYPE=1,ROOT_E_COEFF=0.16, CONST_TERM=0.022,
                        EFFI=1.0,THRES=0.05,SIG_TH=5.0,SIG_PHI=5.,
