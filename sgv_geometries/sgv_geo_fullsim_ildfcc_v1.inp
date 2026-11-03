@@ -9,9 +9,9 @@ TYPE:  BARREL_TRACKING
 C 
       LAYER: BEAMPIPE
          GEOMETRY:  R=1.2, ZMIN=0.0, ZMAX=999.9
-         MATERIAL:    X0=.005611505, A= 4
+         MATERIAL:    X0=.0086, A= 4
          MEASUREMENT: CODE=0
-C       0.045+0.033 cm AlBeMet162 (X0 18.7945 cm ) + 0.09 cm LiquidNDecane (X0  61.5867 cm)
+C       0.045+0.033 cm AlBeMet162 (X0 18.7945 cm ) + 0.09 cm LiquidNDecane (X0  61.5867 cm) + 0.001 cm Au (X0 0.3344)
 
       LAYER: VXD1
          GEOMETRY:  R=1.3 , ZMIN=0.0, ZMAX=10.9
