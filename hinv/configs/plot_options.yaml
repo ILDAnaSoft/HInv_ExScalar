@@ -1,0 +1,14 @@
+# hypothesis, or 'default'
+default:
+
+  # quantity
+  pair_type:
+  
+    # arguments for plot_combined_hist
+    #xlabel: pairedLepType
+    plot_hist_kwargs:
+      int_bins: True
+    ild_style_kwargs:
+      xminor: False
+      legend_kwargs:
+        loc: center
