@@ -10,6 +10,7 @@ This repository contains shared code of the Higgs->Invisible and Extra Scalar an
 | `hinv/sim/`       | SGV fast simulation                                                                                                   |
 | `hinv/reco/`      | Lepton tagging + pairing with `k4run`                                                                                 |
 | `hinv/ana/`       | Observables, weighted datasets, plots                                                                                 |
+| `hinv/configs/`   | Steering files for the `cutflow` tool of ILDAnaSoft/ZHH, see [hinv/configs/README.md](hinv/configs/README.md)         |
 | `steering/`       | Gaudi steering files (run with `k4run`, not imported)                                                                 |
 | `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC                                                                                 |
 
