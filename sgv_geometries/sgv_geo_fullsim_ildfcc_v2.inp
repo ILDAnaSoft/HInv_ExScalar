@@ -7,8 +7,10 @@ BF: BFIELD=2.0
 TYPE:  BARREL_TRACKING
 
 C 
+C       R: X0-weighted mean radius of the central beam pipe (Au, AlBeMet162, paraffin, AlBeMet162 at r = 0.9995-1.17 cm)
+C       from k4geo v00-24 (b0087c8c, key4hep release 2026-04-08), MDI_o1_CADBased_v01, CAD meshes stl_files/Pipe_240430
       LAYER: BEAMPIPE
-         GEOMETRY:  R=1.2, ZMIN=0.0, ZMAX=999.9
+         GEOMETRY:  R=1.065, ZMIN=0.0, ZMAX=999.9
          MATERIAL:    X0=.0073, A= 4
          MEASUREMENT: CODE=0
 C       Au 0.15 % X0 at 1.000 cm, AlBeMet162 0.24 % at 1.023 cm, paraffin 0.15 % at 1.090 cm, AlBeMet162 0.19 % at 1.153 cm

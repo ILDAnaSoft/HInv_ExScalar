@@ -12,8 +12,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from hinv.paths import sgv_dir
-
 REPO_DIR = Path(__file__).resolve().parent.parent
 
 ILC = "ILC"
@@ -88,7 +86,7 @@ def collider_settings(sample: Sample, ild_fcc_version: int = 1) -> ColliderSetti
         settings = ColliderSettings(
             cms_energy=float(sample.energy),
             crossing_angle=0.007,  # 14 mrad full crossing angle
-            sgv_geometry=sgv_dir() / "tests/sgv_geo.inp",
+            sgv_geometry=REPO_DIR / "sgv_geometries/sgv_geo_ild_ilc.inp",
             detector_model="ILD_l5_o1_v02",
         )
 
