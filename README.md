@@ -11,7 +11,7 @@ This repository contains shared code of the Higgs->Invisible and Extra Scalar an
 | `hinv/reco/`      | Lepton tagging + pairing with `k4run`                                                                                 |
 | `hinv/ana/`       | Observables, weighted datasets, plots                                                                                 |
 | `steering/`       | Gaudi steering files (run with `k4run`, not imported)                                                                 |
-| `sgv_geometries/` | SGV geometries of ILD@FCC                                                                                             |
+| `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC                                                                                 |
 
 ## Usage
 
