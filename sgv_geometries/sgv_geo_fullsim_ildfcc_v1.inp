@@ -107,13 +107,14 @@ C
 
 
 CTeresa (updated): R changed
+C       R: phi-averaged radii of the 24 flat ladders in k4geo (sensor centres at 177.28 and 177.53 cm from the z axis)
       LAYER : SET
-            GEOMETRY:  R=178  , ZMIN=0.0, ZMAX=240.5
+            GEOMETRY:  R=177.8, ZMIN=0.0, ZMAX=240.5
             MATERIAL:    X0=.0069176686 , A=14
             MEASUREMENT: CODE=1, SIG_RPHI=0.0007, SIG_Z=0.0100
 
       LAYER : 
-            GEOMETRY:  R=180.43  , ZMIN=0.0, ZMAX=240.5
+            GEOMETRY:  R=178.0, ZMIN=0.0, ZMAX=240.5
             MATERIAL:    X0=.0069176686 , A=14
             MEASUREMENT: CODE=1, SIG_RPHI=0.0007, SIG_Z=0.0100
 
