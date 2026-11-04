@@ -64,6 +64,7 @@ The install must be editable, as the configurations use `steering/` and `sgv_geo
 
 The following must be available, e.g. via the `.env` file of hep_workflows:
 
+- `$dtDir`: the WHIZARD samples are read from `$dtDir/<WHIZARD_SUBDIR>`, see `hinv/paths.py`.
 - `$codeDir`: the reco tasks load `$codeDir/ZHH/source/LeptonPairing/lib/libLeptonPairing.so`, see [Dependencies](#dependencies). It must be a recent build (one containing `LeptonPairingCombined`) for the key4hep release in use.
 - `$SGV_DIR`: an SGV build for the key4hep release in use.
 

@@ -4,13 +4,13 @@ k4run based high-level reconstruction (steering/llrecoil.py), one per collider:
     250-ilc-hinv-fast-k4run    ILD@ILC, all E250-SetA samples
     240-fcc-hinv-fast-k4run    ILD@FCC, all E240-FCCee_PB samples
 
-The input are the existing WHIZARD files in WHIZARD_DIR, i.e. no event generation is run. The
-SGV settings (energy, crossing angle, geometry, detector name) are chosen per file as in
-hinv.sim.sgv, see samples.py. The configurations run up to and including RecoFinal; the
-analysis tasks are not used.
+The input are the existing WHIZARD files in $dtDir/<WHIZARD_SUBDIR> (see paths.py), i.e. no
+event generation is run. The SGV settings (energy, crossing angle, geometry, detector name) are
+chosen per file as in hinv.sim.sgv, see samples.py. The configurations run up to and including
+RecoFinal; the analysis tasks are not used.
 
-Usage (hep_workflows environment set up, this repository installed, see the README). The reco
-jobs need $codeDir, see lepton_pairing_lib:
+Usage (hep_workflows environment set up, this repository installed, see the README). All jobs
+need $dtDir, the reco jobs also $codeDir, see lepton_pairing_lib:
     law run RecoFinal --tag=250-ilc-hinv-fast-k4run
 
 NOTE: 240-fcc-hinv-fast-k4run needs a key4hep release containing ILD_FCCee_v01 in $K4GEO for the
@@ -21,8 +21,6 @@ an AnalysisConfiguration for this to work. See hep_workflows/configs/test_e250_z
 as an example.
 """
 
-from pathlib import Path
-
 from hep_workflows.framework import (
     EVENT_SIM_ENUM,
     RECO_ANA_RUNMODES,
@@ -30,10 +28,9 @@ from hep_workflows.framework import (
     configurations,
 )
 
+from hinv.paths import WHIZARD_SUBDIR, data_dir
 from hinv.samples import FCCEE, ILC, REPO_DIR, collider_settings, parse_sample
 from hinv.sim.sgv import SGV_OUTPUT
-
-WHIZARD_DIR = Path("/data/dust/user/schwanvl/promotion/data/2026-10-whizard/2026-10-27")
 
 
 class HInvFastK4RunConfig(AnalysisConfiguration):
@@ -89,7 +86,7 @@ class HInvFastK4RunConfig(AnalysisConfiguration):
 
     def input_files(self) -> list[str]:
         # one sub-directory per sample, e.g. E250-SetA.P2f_mumu.eL.pR.I403003/
-        files = sorted(str(f) for f in WHIZARD_DIR.glob("E*/*.slcio"))
+        files = sorted(str(f) for f in (data_dir() / WHIZARD_SUBDIR).glob("E*/*.slcio"))
         return [f for f in files if parse_sample(f).collider == self.collider]
 
     def sgv_inputs(self, task):
