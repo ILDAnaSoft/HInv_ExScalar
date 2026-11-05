@@ -1,0 +1,12 @@
+[project]
+name = "hinv"
+dynamic = ["version"]
+dependencies = [
+    "hep_workflows @ git+https://github.com/nVentis/hep-workflows"
+]
+
+[tool.setuptools.packages.find]
+include = ["hinv*"]
+
+[project.entry-points."hep_workflows.tasks"]
+hinv = "hinv.workflows.plugin:register"

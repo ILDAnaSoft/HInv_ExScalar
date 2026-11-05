@@ -1,0 +1,123 @@
+# Steering file for cutflow.py for the h->invisible analysis at ILD@ILC
+#
+# The sources are read from $DATASET_ROOT/dataset_<source>; run cutflow from the directory
+# containing the main HDF5 files $hypothesis.<source>.h5. See README.md for the full workflow.
+
+# used in plotting
+analysis_name: ILD_ILC_ZH_inv
+
+# used as label in plots and for naming output files
+hypothesis: mumuH_inv
+
+signal_categories:
+- EventCategories.e2e2h
+
+# polarization of [ electronBeam, positronBeam ]
+beam_polarization: [ -0.8, +0.3 ]
+
+# unit: ab^-1
+luminosity: 2.
+
+# center-of-mass energy in GeV
+sqrt_s: 250
+
+reset: false
+
+processes: 'processes.json'
+event_categories: 'event_categories.yaml'
+
+# path: directory containing items/<tree>.<branch>/item.<i>.h5, as written by extract_observables_cutflow.py
+# root_files: unused when running with --skip-integrity-check, as the HDF5 data is used as is
+sources:
+  - name: e2e2h_pol
+
+    # base directory of the converted HDF5 files
+    path: $DATASET_ROOT/dataset_e2e2h_pol
+
+    # location of the main HDF5 working file
+    # converted HDF5 data is linked into this file using virtual datasets
+    # the default patten is: $PWD/$hypothesis.{name}.h5
+    # where name is the name of the defined source
+    ds_path: $PWD/$hypothesis.e2e2h_pol.h5
+    
+    root_files: ''
+    event_categorization:
+      default: null
+      order: null
+      items: [ e2e2h ]
+    disabled: false
+    reset: false
+  
+  - name: e2e2vv_pol
+    path: $DATASET_ROOT/dataset_e2e2vv_pol
+    #ds_path: $PWD/$hypothesis.e2e2vv_pol.h5
+    root_files: ''
+    event_categorization:
+      default: null
+      order: null
+      items: [ zz_mumununu ]
+    disabled: false
+    reset: false
+
+# feature definition
+# only used when the HDF5 data is created by the cutflow tool itself from ROOT files (i.e. without
+# --skip-integrity-check). here, the items below are written by hinv/ana/extract_observables_cutflow.py; see its
+# docstring and item_specs() for the mapping tree.branch -> name
+features:
+  interpret:
+  - { name: id, dtype: uint32, auto_increment: true }
+  - { name: event, tree: FinalStates, dtype: uint32 }
+  - { name: cross_section, tree: FinalStates, dtype: float }
+  - { name: final_state_counts, tree: FinalStates, branch: final_state_counts.second, columns: 17, dtype: uint8 }
+  - { name: n_b_from_higgs, tree: FinalStates, dtype: uint8 }
+  - { name: pol_code, tree: FinalStates, branch: polarization_code, dtype: uint8 }
+  - { name: process, tree: FinalStates, dtype: uint32 }
+
+  - { names: [ pair_type, n_isolep ], tree: ExtractObservables, dtype: uint8 }
+  - { name: n_rest, tree: ExtractObservables, dtype: uint16 }
+  - { names: [ m_ll, m_recoil, pt_ll, p_ll, cos_ll, acoplanarity, cos_lep_max,
+               pt_miss, cos_miss, e_rest ], tree: ExtractObservables, dtype: float32 }
+
+cutflow_table:
+  items:
+    - category: zz_mumununu
+      label: '\HepProcess{\Plpm\Plpm\Pgn\Pgn}'
+    
+    - category: e2e2h
+      label: '\HepProcess{\Plpm\Plpm\PH}'
+      is_signal: true
+    - sum: signal
+      label: 'Total signal'
+
+# cuts, see config/mmHHbbbb.yaml in ILDAnaSoft/ZHH for documentation of the syntax
+cuts:
+  preselection:
+  - { quantity: pair_type, operator: eq, value: 13, label: Paired Lepton Type }
+  - { quantity: m_ll, operator: within_bounds, lower: 80., upper: 100., label: 'm_{ll}', unit: 'GeV', xlim_view: [0, 200] }
+  - { quantity: m_recoil, operator: within_bounds, lower: 100., upper: 160., label: 'm_{recoil}', unit: 'GeV', xlim_view: [0, 300] }
+  - { quantity: pt_miss, operator: gte, value: 10., label: 'p_{t}^{miss}', unit: 'GeV' }
+
+# used to describe how quantities should be plotted CutflowProcessor
+plot_options: 'plot_options.yaml'
+
+actions:
+- type: ApplyCuts
+  cuts: preselection
+  weight_column: weight
+  split: 0 # split is only read if weight_column is different than the default value 'weight'
+  step: 0 # step=0 is always preselection
+  cache: '$analysis_name_$hypothesis_cutflow_presel.pickle'
+
+# calls CutflowProcessor.cutflowPlots() through CreateCutflowPlotsAction 
+- type: CreateCutflowPlots
+  file: '$analysis_name_$hypothesis_cutflow_preselection_plots.pdf'
+  bins: 64
+  # optional:
+  # step_start: 0
+  # step_end: 0
+  
+- type: CreateCutflowTable
+  file: '$analysis_name_$hypothesis_cutflow_preselection_table.pdf'
+  # optional:
+  # step_start: 0
+  # step_end: 0
