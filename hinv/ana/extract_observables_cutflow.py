@@ -34,10 +34,7 @@ Usage (key4hep sourced):
 from __future__ import annotations
 
 import argparse
-import glob
 import json
-import os
-import os.path as osp
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from multiprocessing import get_context
@@ -51,7 +48,7 @@ from hinv.paths import CUTFLOW_SUBDIR, RECO_SUBDIR, data_dir
 from hinv.samples import FCCEE, ILC, RUNS, parse_sample
 
 # process name (event parameter processName) -> process ID, as used by the cutflow tool
-DEFAULT_PROCESSES = osp.join(osp.dirname(osp.abspath(__file__)), "../configs/processes.json")
+DEFAULT_PROCESSES = Path(__file__).resolve().parent.parent / "configs/processes.json"
 
 HYPOTHESIS = "mumuH_inv"
 
@@ -108,14 +105,14 @@ def write_item(items_dir, tree, branch, chunk_idx, data, dtype, input_file):
     columns = data.reshape(len(data), -1)
     col_names = [f"dim{i}" for i in range(columns.shape[1])]
 
-    out_dir = f"{items_dir}/{tree}.{branch}"
-    os.makedirs(out_dir, exist_ok=True)
+    out_dir = items_dir / f"{tree}.{branch}"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    with h5py.File(f"{out_dir}/item.{chunk_idx}.h5", "w") as hf:
+    with h5py.File(out_dir / f"item.{chunk_idx}.h5", "w") as hf:
         hf.attrs["chunk_idx"] = chunk_idx
         hf.attrs["tree"] = tree
         hf.attrs["branch"] = branch
-        hf.attrs["input_files"] = [input_file]
+        hf.attrs["input_files"] = [str(input_file)]
 
         for i, col in enumerate(col_names):
             hf.create_dataset(col, data=columns[:, i].astype(dtype))
@@ -140,9 +137,8 @@ def _process_file(args):
     chunk_idx, path, items_dir, PROCESS_IDS = args
     from pyLCIO import IOIMPL  # imported per worker process
 
-    path = osp.abspath(path)
     reader = IOIMPL.LCFactory.getInstance().createLCReader()
-    reader.open(path)
+    reader.open(str(path))
     columns = {name: [] for name in OBSERVABLES}
     event_numbers = []
     meta = None
@@ -184,7 +180,7 @@ def _process_file(args):
     write(ITEM_TREE_FINAL_STATES, "n_b_from_higgs", np.zeros(n_events), "uint8")
 
     n_pairs = int(np.sum(np.array(columns["pair_type"]) > 0))
-    return n_events, f"{osp.basename(path)}: {n_pairs}/{n_events} events with lepton pair"
+    return n_events, f"{path.name}: {n_pairs}/{n_events} events with lepton pair"
 
 
 def write_main_file(main_file, items_dir, files, sizes):
@@ -195,21 +191,19 @@ def write_main_file(main_file, items_dir, files, sizes):
     would otherwise keep using the old weights and selection and skip existing plots and tables."""
 
     nrows = int(np.sum(sizes))
-    out_dir = osp.dirname(osp.abspath(main_file))
-    os.makedirs(out_dir, exist_ok=True)
+    main_file.parent.mkdir(parents=True, exist_ok=True)
 
-    stem = osp.splitext(main_file)[0]
-    hypothesis = osp.basename(main_file).split(".")[0]
-    for stale in [f"{stem}.npz", *glob.glob(f"{out_dir}/*_{hypothesis}_cutflow_*")]:
-        if osp.isfile(stale):
-            os.remove(stale)
+    hypothesis = main_file.name.split(".")[0]
+    for stale in [main_file.with_suffix(".npz"), *main_file.parent.glob(f"*_{hypothesis}_cutflow_*")]:
+        if stale.is_file():
+            stale.unlink()
 
     with h5py.File(main_file, "w") as hf:
         hf.attrs["nrows"] = nrows
         hf["id"] = np.arange(nrows, dtype="uint32")
 
         for tree, branch, name, dtype in item_specs():
-            chunks = [f"{items_dir}/{tree}.{branch}/item.{i}.h5" for i in range(len(files))]
+            chunks = [items_dir / f"{tree}.{branch}/item.{i}.h5" for i in range(len(files))]
 
             with h5py.File(chunks[0], "r") as cf:
                 col_names = list(cf.attrs["col_names"])
@@ -219,37 +213,37 @@ def write_main_file(main_file, items_dir, files, sizes):
                 layout = h5py.VirtualLayout((nrows,), dtype)
                 start = 0
                 for chunk, size in zip(chunks, sizes):
-                    layout[start:start + size] = h5py.VirtualSource(chunk, col, shape=(size,), dtype=dtype)
+                    layout[start:start + size] = h5py.VirtualSource(str(chunk), col, shape=(size,), dtype=dtype)
                     start += size
 
                 key = f"{name}.{col}" if multi else name
                 hf.create_virtual_dataset(key, layout, fillvalue=np.nan)
 
-    with open(f"{stem}.meta.json", "wt", encoding="utf-8") as jf:
-        json.dump({"files": [osp.abspath(f) for f in files], "sizes": [int(s) for s in sizes]}, jf, ensure_ascii=False, indent=4)
+    meta = {"files": [str(f) for f in files], "sizes": [int(s) for s in sizes]}
+    main_file.with_suffix(".meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=4), encoding="utf-8")
 
 
 @dataclass
 class Source:
     """All files of a process at a collider, and the main file of each run using them."""
 
-    items_dir: str
-    files: list[str]
-    main_files: list[str] = field(default_factory=list)
+    items_dir: Path
+    files: list[Path]
+    main_files: list[Path] = field(default_factory=list)
     sizes: list[int] = field(default_factory=list)
 
 
 def plan_sources(reco_dir: Path, output_dir: Path) -> dict[tuple[str, str], Source]:
     """Assigns the reco files to the sources of all runs. A process or polarisation missing from a
     run is an error: the cutflow tool would leave it out of the normalisation without any warning."""
-    samples = [(f, parse_sample(f)) for f in sorted(reco_dir.glob("*.slcio"))]
+    samples = [(f.resolve(), parse_sample(f)) for f in sorted(reco_dir.glob("*.slcio"))]
 
     sources = {}
     for run_key, run in RUNS.items():
         for process, source_name in SOURCES.items():
             files = {
                 polarisation: [
-                    str(f)
+                    f
                     for f, s in samples
                     if (s.collider, s.energy, s.isr, s.process, s.polarisation)
                     == (run.collider, run.energy, True, process, polarisation)
@@ -264,11 +258,11 @@ def plan_sources(reco_dir: Path, output_dir: Path) -> dict[tuple[str, str], Sour
             source = sources.setdefault(
                 (tag, source_name),
                 Source(
-                    items_dir=str(output_dir / f"dataset_{tag}_{source_name}/items"),
+                    items_dir=output_dir / f"dataset_{tag}_{source_name}/items",
                     files=[f for found in files.values() for f in found],
                 ),
             )
-            source.main_files.append(str(output_dir / f"{HYPOTHESIS}_{run_key}.{source_name}.h5"))
+            source.main_files.append(output_dir / f"{HYPOTHESIS}_{run_key}.{source_name}.h5")
     return sources
 
 
@@ -277,14 +271,13 @@ def main():
     parser.add_argument("reco_dir", type=Path, nargs="?", help=f"Default: $dtDir/{RECO_SUBDIR}")
     parser.add_argument("output_dir", type=Path, nargs="?", help=f"Default: $dtDir/{CUTFLOW_SUBDIR}")
     parser.add_argument("--jobs", type=int, default=8, help="Parallel processes (default: 8)")
-    parser.add_argument("--processes", default=DEFAULT_PROCESSES, help="JSON file mapping process names to IDs (default: hinv/configs/processes.json)")
+    parser.add_argument("--processes", type=Path, default=DEFAULT_PROCESSES, help="JSON file mapping process names to IDs (default: hinv/configs/processes.json)")
     args = parser.parse_args()
 
     reco_dir = args.reco_dir or data_dir() / RECO_SUBDIR
     output_dir = (args.output_dir or data_dir() / CUTFLOW_SUBDIR).resolve()
 
-    with open(args.processes) as tf:
-        PROCESS_IDS: dict[str, int] = json.load(tf)
+    PROCESS_IDS: dict[str, int] = json.loads(args.processes.read_text())
 
     sources = list(plan_sources(reco_dir, output_dir).values())
     tasks = [(i, f, s.items_dir, PROCESS_IDS) for s in sources for i, f in enumerate(s.files)]
