@@ -3,10 +3,13 @@ steering/llrecoil.py and store them as HDF5 items which can be read by the cutfl
 ILDAnaSoft/ZHH (bin/cutflow, see zhh/cli/cutflow.py). The observables themselves are computed
 by extract_observables.py.
 
-Output: for every item (a column of the cutflow data store), one HDF5 file per input file in the
-layout written by the ROOT2HDF5Converter of the cutflow tool:
+Output below <output_dir>, for all runs of samples.RUNS:
 
-    <items_dir>/<tree>.<branch>/item.<i>.h5        i: index of the input file in the argument list
+1. The items: for every item (a column of the cutflow data store), one HDF5 file per input file in
+   the layout written by the ROOT2HDF5Converter of the cutflow tool. A source holds all
+   polarisations of a process at a collider, so the runs of a collider share the items:
+
+    dataset_<collider>_<source>/items/<tree>.<branch>/item.<i>.h5
 
     ExtractObservables.<name>                     the observables listed in OBSERVABLES
     FinalStates.final_state_counts.second         std::map<int, int> final_state_counts (values only;
@@ -14,31 +17,47 @@ layout written by the ROOT2HDF5Converter of the cutflow tool:
     FinalStates.{event,cross_section,process,polarization_code,n_b_from_higgs}
                                                   event meta data required by the cutflow tool
 
-With --main-file, the main HDF5 file of a cutflow source is additionally created, which links
-(virtual datasets) to all items. This is required to run the cutflow tool with
---skip-integrity-check without any ROOT files; the file must be located at
-<cwd of cutflow>/<hypothesis>.<source name>.h5.
+2. The main HDF5 files, one per run and source, which link (virtual datasets) to all items. They
+   are required to run the cutflow tool with --skip-integrity-check without any ROOT files, and
+   store the weights of a run, i.e. its polarisation and luminosity:
+
+    <hypothesis>.<source>.h5    with the hypothesis mumuH_inv_<run>, e.g. mumuH_inv_ILC250_LR
+
+Rerunning recreates the main files and removes the outputs of the cutflow tool derived from them.
 
 Usage (key4hep sourced):
-    python -m hinv.ana.extract_observables_cutflow --items-dir <items_dir> [--main-file <file.h5>]
-        [--jobs N] [--processes <processes.json>] <reco.slcio> ...
+    python -m hinv.ana.extract_observables_cutflow [reco_dir] [output_dir] [--jobs N]
+        [--processes <processes.json>]
     See hinv/configs/README.md for running the cutflow tool on the output.
 """
 
+from __future__ import annotations
+
 import argparse
+import glob
 import json
 import os
 import os.path as osp
 from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass, field
 from multiprocessing import get_context
+from pathlib import Path
 
 import h5py
 import numpy as np
 
 from hinv.ana.extract_observables import OBSERVABLES, event_observables
+from hinv.paths import CUTFLOW_SUBDIR, RECO_SUBDIR, data_dir
+from hinv.samples import FCCEE, ILC, RUNS, parse_sample
 
 # process name (event parameter processName) -> process ID, as used by the cutflow tool
 DEFAULT_PROCESSES = osp.join(osp.dirname(osp.abspath(__file__)), "../configs/processes.json")
+
+HYPOTHESIS = "mumuH_inv"
+
+# sample process -> cutflow source; the names are used in hinv/configs/sources_<collider>.yaml
+SOURCES = {"e2e2h_inv": "e2e2h", "4f_mumununu": "e2e2vv", "2f_mumu": "mumu", "4f_eemumu": "eemumu"}
+COLLIDER_TAGS = {ILC: "ilc", FCCEE: "fcc"}
 
 # dtype of the HDF5 items; float32 where not listed
 OBSERVABLE_DTYPES = {"pair_type": "uint8", "n_rest": "uint16", "n_isolep": "uint8"}
@@ -50,8 +69,15 @@ ITEM_TREE_FINAL_STATES = "FinalStates"
 # m_final_state_counts of the FinalStateRecorder; std::map is sorted -> this is the column order
 FS_KEYS = [1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24, 25]
 
-# TODO: determine from MCParticlesSkimmed. for now, every event has one Higgs and two muons
-FS_COUNTS_FIXED = {25: 1, 13: 2}
+# Final state per process name; only the charged leptons and the Higgs are filled, as the neutrino
+# flavours of zz_mumununu are not known per event. The event categories in event_categories.yaml
+# use the process ID, so the FinalStateDefinitions of ZHH must not be used on these counts.
+FS_COUNTS = {
+    "e2e2h": {25: 1, 13: 2},
+    "zz_mumununu": {13: 2},
+    "mumu": {13: 2},
+    "eemumu": {11: 2, 13: 2},
+}
 
 # polarization_code as in zhh/processes/PolarizationCodes.py: 0=eL.pL, 1=eL.pR, 2=eR.pL, 3=eR.pR, 4=unpolarized
 def polarization_code(pol_em, pol_ep):
@@ -124,10 +150,12 @@ def _process_file(args):
     for event in reader:
         if meta is None:
             params = event.getParameters()
+            process_name = params.getStringVal("processName")
 
             meta = {
                 "cross_section": params.getFloatVal("crossSection"),
-                "process": PROCESS_IDS[params.getStringVal("processName")],
+                "process": PROCESS_IDS[process_name],
+                "fs_counts": FS_COUNTS[process_name],
                 "pol_code": polarization_code(params.getFloatVal("beamPol1"), params.getFloatVal("beamPol2")),
             }
         event_numbers.append(event.getEventNumber())
@@ -145,7 +173,7 @@ def _process_file(args):
         write(ITEM_TREE_OBSERVABLES, name, values, OBSERVABLE_DTYPES.get(name, "float32"))
 
     counts = np.zeros((n_events, len(FS_KEYS)), dtype="uint8")
-    for pdg, count in FS_COUNTS_FIXED.items():
+    for pdg, count in meta["fs_counts"].items():
         counts[:, FS_KEYS.index(pdg)] = count
 
     write(ITEM_TREE_FINAL_STATES, "final_state_counts.second", counts, "uint8")
@@ -162,16 +190,22 @@ def _process_file(args):
 def write_main_file(main_file, items_dir, files, sizes):
     """Creates the main HDF5 file of a cutflow source: for every item a virtual dataset linking
     the chunks (same as createVDS in the ROOT2HDF5Converter), the nrows attribute and the meta
-    file (<main_file without extension>.meta.json) which marks the dataset as complete."""
+    file (<main_file without extension>.meta.json) which marks the dataset as complete. Any older
+    main file is replaced and the outputs of the cutflow tool derived from it are removed: the tool
+    would otherwise keep using the old weights and selection and skip existing plots and tables."""
 
     nrows = int(np.sum(sizes))
-    os.makedirs(osp.dirname(osp.abspath(main_file)), exist_ok=True)
+    out_dir = osp.dirname(osp.abspath(main_file))
+    os.makedirs(out_dir, exist_ok=True)
 
-    with h5py.File(main_file, "a") as hf:
+    stem = osp.splitext(main_file)[0]
+    hypothesis = osp.basename(main_file).split(".")[0]
+    for stale in [f"{stem}.npz", *glob.glob(f"{out_dir}/*_{hypothesis}_cutflow_*")]:
+        if osp.isfile(stale):
+            os.remove(stale)
+
+    with h5py.File(main_file, "w") as hf:
         hf.attrs["nrows"] = nrows
-
-        if "id" in hf:
-            del hf["id"]
         hf["id"] = np.arange(nrows, dtype="uint32")
 
         for tree, branch, name, dtype in item_specs():
@@ -189,43 +223,83 @@ def write_main_file(main_file, items_dir, files, sizes):
                     start += size
 
                 key = f"{name}.{col}" if multi else name
-                if key in hf:
-                    del hf[key]
                 hf.create_virtual_dataset(key, layout, fillvalue=np.nan)
 
-    with open(f"{osp.splitext(main_file)[0]}.meta.json", "wt", encoding="utf-8") as jf:
+    with open(f"{stem}.meta.json", "wt", encoding="utf-8") as jf:
         json.dump({"files": [osp.abspath(f) for f in files], "sizes": [int(s) for s in sizes]}, jf, ensure_ascii=False, indent=4)
+
+
+@dataclass
+class Source:
+    """All files of a process at a collider, and the main file of each run using them."""
+
+    items_dir: str
+    files: list[str]
+    main_files: list[str] = field(default_factory=list)
+    sizes: list[int] = field(default_factory=list)
+
+
+def plan_sources(reco_dir: Path, output_dir: Path) -> dict[tuple[str, str], Source]:
+    """Assigns the reco files to the sources of all runs. A process or polarisation missing from a
+    run is an error: the cutflow tool would leave it out of the normalisation without any warning."""
+    samples = [(f, parse_sample(f)) for f in sorted(reco_dir.glob("*.slcio"))]
+
+    sources = {}
+    for run_key, run in RUNS.items():
+        for process, source_name in SOURCES.items():
+            files = {
+                polarisation: [
+                    str(f)
+                    for f, s in samples
+                    if (s.collider, s.energy, s.isr, s.process, s.polarisation)
+                    == (run.collider, run.energy, True, process, polarisation)
+                ]
+                for polarisation in run.polarisations()
+            }
+            missing = [polarisation for polarisation, found in files.items() if not found]
+            if missing:
+                raise SystemExit(f"Error: no {process} files for {run_key} {missing} in {reco_dir}")
+
+            tag = COLLIDER_TAGS[run.collider]
+            source = sources.setdefault(
+                (tag, source_name),
+                Source(
+                    items_dir=str(output_dir / f"dataset_{tag}_{source_name}/items"),
+                    files=[f for found in files.values() for f in found],
+                ),
+            )
+            source.main_files.append(str(output_dir / f"{HYPOTHESIS}_{run_key}.{source_name}.h5"))
+    return sources
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("files", nargs="+", help="Reco SLCIO files; the i-th file is stored as chunk item.<i>.h5")
-    parser.add_argument("--items-dir", required=True, help="Output directory of the HDF5 items")
-    parser.add_argument("--main-file", default=None, help="If given, also create the main HDF5 file of the cutflow source at this path")
+    parser.add_argument("reco_dir", type=Path, nargs="?", help=f"Default: $dtDir/{RECO_SUBDIR}")
+    parser.add_argument("output_dir", type=Path, nargs="?", help=f"Default: $dtDir/{CUTFLOW_SUBDIR}")
     parser.add_argument("--jobs", type=int, default=8, help="Parallel processes (default: 8)")
     parser.add_argument("--processes", default=DEFAULT_PROCESSES, help="JSON file mapping process names to IDs (default: hinv/configs/processes.json)")
     args = parser.parse_args()
 
+    reco_dir = args.reco_dir or data_dir() / RECO_SUBDIR
+    output_dir = (args.output_dir or data_dir() / CUTFLOW_SUBDIR).resolve()
+
     with open(args.processes) as tf:
         PROCESS_IDS: dict[str, int] = json.load(tf)
 
-    missing = [f for f in args.files if not osp.isfile(f)]
-    if missing:
-        parser.error("input file(s) not found:\n  " + "\n  ".join(missing))
-
-    items_dir = osp.abspath(args.items_dir)
-    tasks = [(i, f, items_dir, PROCESS_IDS) for i, f in enumerate(args.files)]
+    sources = list(plan_sources(reco_dir, output_dir).values())
+    tasks = [(i, f, s.items_dir, PROCESS_IDS) for s in sources for i, f in enumerate(s.files)]
+    owners = [s for s in sources for _ in s.files]
 
     # spawn: fresh interpreters, so ROOT/pyLCIO are initialised per process
-    sizes = []
     with ProcessPoolExecutor(max_workers=min(args.jobs, len(tasks)), mp_context=get_context("spawn")) as pool:
-        for n_events, message in pool.map(process_file, tasks):
-            sizes.append(n_events)
+        for source, (n_events, message) in zip(owners, pool.map(process_file, tasks)):
+            source.sizes.append(n_events)
             print(message)
 
-    if args.main_file:
-        write_main_file(args.main_file, items_dir, args.files, sizes)
-        print(f"Wrote main file {args.main_file} ({sum(sizes)} events)")
+    for source in sources:
+        for main_file in source.main_files:
+            write_main_file(main_file, source.items_dir, source.files, source.sizes)
+            print(f"Wrote main file {main_file} ({sum(source.sizes)} events)")
 
 
 if __name__ == "__main__":
