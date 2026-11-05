@@ -1,7 +1,7 @@
 # Steering file of the cutflow tool for the h->invisible analysis: ILD@ILC, 250 GeV, 0.9 ab^-1, P(e-, e+) = (+0.8, -0.3)
 #
-# Run from the directory containing the main HDF5 files $hypothesis.<source>.h5. The luminosity and
-# polarisation must agree with RUNS in hinv/samples.py. See README.md for the full workflow.
+# Run from the directory containing the main HDF5 files $hypothesis.<source>.h5. The energy, luminosity
+# and polarisation below are also used by hinv/runs.py. See README.md for the full workflow.
 
 # used in plotting and for naming output files
 analysis_name: ILD_ZH_inv

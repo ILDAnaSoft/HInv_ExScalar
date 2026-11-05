@@ -3,7 +3,7 @@
 Each event of a sample gets the weight
     w = sigma * L * f_hel / N_generated
 with the WHIZARD cross section sigma, the run's luminosity L, the fraction f_hel of the run's
-luminosity in the sample's helicity state (see samples.Run), and the number of generated events
+luminosity in the sample's helicity state (see runs.Run), and the number of generated events
 of the sample, summed over all its files (events without a lepton pair included).
 """
 
@@ -17,7 +17,8 @@ import numpy as np
 
 from hinv.ana.extract_observables import OBSERVABLES
 from hinv.paths import RECO_SUBDIR, data_dir
-from hinv.samples import RUNS, parse_sample
+from hinv.runs import RUNS
+from hinv.samples import parse_sample
 
 SIGNAL = "e2e2h_inv"
 
@@ -38,7 +39,7 @@ PROCESSES = {
 
 
 def load_run(run_key: str, obs_dir: Path | None = None) -> dict[str, dict[str, np.ndarray]]:
-    """Returns {process: {observable: array, ..., "weight": array}} for one run of samples.RUNS."""
+    """Returns {process: {observable: array, ..., "weight": array}} for one run of runs.RUNS."""
     run = RUNS[run_key]
     obs_dir = obs_dir or data_dir() / RECO_SUBDIR
 
