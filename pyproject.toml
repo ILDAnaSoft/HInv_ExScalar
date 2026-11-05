@@ -1,0 +1,25 @@
+[project]
+name = "hinv"
+dynamic = ["version"]
+requires-python = ">=3.11"
+# Installed on top of key4hep, which provides the other requirements of ZHH (see the README)
+dependencies = [
+    "h5py",
+    "matplotlib",
+    "numpy",
+    "pyyaml",
+    # hep_workflows, also for the analysis tasks
+    "hep_workflows @ git+https://github.com/nVentis/hep-workflows",
+    # requirements of ZHH missing from key4hep. ZHH itself is used via PYTHONPATH, see setup.sh
+    "jsbeautifier",
+    "optuna",
+    "phc @ git+https://github.com/nVentis/pyhepcommon",
+    "seaborn",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["hinv*"]

@@ -15,10 +15,25 @@ This repository contains shared code of the Higgs->Invisible and Extra Scalar an
 | `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC, SGV steering for ILD@FCC (`sgv_ildfcc.steer`)                                  |
 | `utils/`          | Stand-alone helpers, e.g. `plot_sgv_geometry.py` (r-z view of SGV geometries with polar-angle/eta rays)               |
 
+## Setup
+
+The Python environment is a `.venv` in this repository on top of key4hep. Create it once:
+
+```bash
+source setup.sh  # sets up key4hep
+python -m venv --system-site-packages .venv
+.venv/bin/pip install -e .
+```
+
+Afterwards, `source setup.sh` is all that is needed in a new shell. It sets up key4hep, activates the `.venv` and adds `$codeDir/ZHH` to `PYTHONPATH` for the cutflow tool.
+
+> [!IMPORTANT]
+> Do not `pip install` ZHH into this environment, and do not use a ZHH checkout which has a `zhh.egg-info` directory, as an editable install creates. `hep_workflows` then loads the plugin of ZHH when it is imported, which fails without the environment of ZHH (`No module named 'workflows'`, `KeyError: 'REPO_ROOT'`).
+
 ## Usage
 
 ```bash
-source setup.sh  # adds the repository to PYTHONPATH
+source setup.sh
 python -m hinv.sim.sgv batch  # $dtDir/<WHIZARD_SUBDIR> -> $dtDir/<SGV_SUBDIR>
 python -m hinv.reco.reco  # -> $dtDir/<RECO_SUBDIR>
 python -m hinv.ana.extract_observables

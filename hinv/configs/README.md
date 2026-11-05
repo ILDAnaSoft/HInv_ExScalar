@@ -22,13 +22,13 @@ They share the following files, which are found relative to the steering file:
 
 ## Requirements
 
-ZHH from `main` (at least #23, which is needed for the process IDs used here), with its Python
-environment set up.
+A ZHH checkout at `$codeDir/ZHH` from `main` (at least #23, which is needed for the process IDs used
+here), and the environment described under Setup in the [main README](../../README.md).
 
 ## 1. Create the HDF5 datasets
 
 ```bash
-source setup.sh  # in the repository root; key4hep must be set up too
+source setup.sh  # in the repository root
 python -m hinv.ana.extract_observables_cutflow  # $dtDir/<RECO_SUBDIR> -> $dtDir/<CUTFLOW_SUBDIR>
 ```
 
@@ -55,9 +55,9 @@ Rerunning the extraction recreates the main files and removes the `cutflow` outp
 cd $dtDir/2026-10-cutflow/2026-10-27  # see CUTFLOW_SUBDIR in hinv/paths.py
 export DATASET_ROOT=$PWD
 
-cutflow $HINV_DIR/hinv/configs/e2e2h_inv_ilc250_lr.yaml --skip-integrity-check
-cutflow $HINV_DIR/hinv/configs/e2e2h_inv_ilc250_rl.yaml --skip-integrity-check
-cutflow $HINV_DIR/hinv/configs/e2e2h_inv_fcc240.yaml --skip-integrity-check
+python -m zhh.cli.cutflow $HINV_DIR/hinv/configs/e2e2h_inv_ilc250_lr.yaml --skip-integrity-check
+python -m zhh.cli.cutflow $HINV_DIR/hinv/configs/e2e2h_inv_ilc250_rl.yaml --skip-integrity-check
+python -m zhh.cli.cutflow $HINV_DIR/hinv/configs/e2e2h_inv_fcc240.yaml --skip-integrity-check
 ```
 
 `--skip-integrity-check` is required: the HDF5 data was not converted from ROOT files by the
