@@ -6,7 +6,7 @@ This repository contains shared code of the Higgs->Invisible and Extra Scalar an
 
 | Path              | Content                                                                                                               |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `hinv/`           | Python package: shared `paths.py` (from `$codeDir`/`$dtDir`) and `samples.py` (sample names, collider settings, runs) |
+| `hinv/`           | Python package: shared `paths.py` (from `$codeDir`/`$dtDir`), `samples.py` (sample names, collider settings), `runs.py` (run plans) |
 | `hinv/sim/`       | SGV fast simulation                                                                                                   |
 | `hinv/reco/`      | Lepton tagging + pairing with `k4run`                                                                                 |
 | `hinv/ana/`       | Observables, weighted datasets, plots                                                                                 |

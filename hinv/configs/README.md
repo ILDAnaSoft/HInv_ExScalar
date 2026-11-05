@@ -1,7 +1,7 @@
 # Cutflow analysis of ZH -> ll + invisible
 
 Steering files for the `cutflow` tool of [ILDAnaSoft/ZHH](https://github.com/ILDAnaSoft/ZHH), one per
-run of `RUNS` in `hinv/samples.py`:
+run of `RUNS` in `hinv/runs.py`, which reads the energy, luminosity and polarisation from these files:
 
 | File                       | Run                                                     |
 | -------------------------- | ------------------------------------------------------- |
@@ -22,8 +22,8 @@ They share the following files, which are found relative to the steering file:
 
 ## Requirements
 
-ZHH from `main` (at least #21) including the `cutflow-standalone-fixes` branch, which is needed for
-the process IDs used here, with its Python environment set up.
+ZHH from `main` (at least #23, which is needed for the process IDs used here), with its Python
+environment set up.
 
 ## 1. Create the HDF5 datasets
 

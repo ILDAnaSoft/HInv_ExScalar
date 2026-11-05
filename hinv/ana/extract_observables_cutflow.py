@@ -3,7 +3,7 @@ steering/llrecoil.py and store them as HDF5 items which can be read by the cutfl
 ILDAnaSoft/ZHH (bin/cutflow, see zhh/cli/cutflow.py). The observables themselves are computed
 by extract_observables.py.
 
-Output below <output_dir>, for all runs of samples.RUNS:
+Output below <output_dir>, for all runs of runs.RUNS:
 
 1. The items: for every item (a column of the cutflow data store), one HDF5 file per input file in
    the layout written by the ROOT2HDF5Converter of the cutflow tool. A source holds all
@@ -45,7 +45,8 @@ import numpy as np
 
 from hinv.ana.extract_observables import OBSERVABLES, event_observables
 from hinv.paths import CUTFLOW_SUBDIR, RECO_SUBDIR, data_dir
-from hinv.samples import FCCEE, ILC, RUNS, parse_sample
+from hinv.runs import RUNS
+from hinv.samples import FCCEE, ILC, parse_sample
 
 # process name (event parameter processName) -> process ID, as used by the cutflow tool
 DEFAULT_PROCESSES = Path(__file__).resolve().parent.parent / "configs/processes.json"
