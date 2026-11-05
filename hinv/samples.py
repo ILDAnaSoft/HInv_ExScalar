@@ -8,7 +8,6 @@ File names follow the WHIZARD/ILD convention, e.g.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -43,7 +42,7 @@ class ColliderSettings:
     sgv_steering: Path | None = None  # None: $SGV_DIR/tests/sgv.steer (written for ILD@ILC)
 
 
-def parse_sample(path: str | os.PathLike) -> Sample:
+def parse_sample(path: str | Path) -> Sample:
     tokens = Path(path).name.split(".")
     if len(tokens) < 2 or not tokens[1].startswith("P"):
         raise ValueError(f"Cannot parse sample name: {path}")
