@@ -1,0 +1,51 @@
+# Steering file of the cutflow tool for the h->invisible analysis: ILD@ILC, 250 GeV, 0.9 ab^-1, P(e-, e+) = (+0.8, -0.3)
+#
+# Run from the directory containing the main HDF5 files $hypothesis.<source>.h5. The luminosity and
+# polarisation must agree with RUNS in hinv/samples.py. See README.md for the full workflow.
+
+# used in plotting and for naming output files
+analysis_name: ILD_ZH_inv
+
+# used as label in plots and for naming output files; selects the main HDF5 files of this run
+hypothesis: mumuH_inv_ILC250_RL
+
+signal_categories:
+- EventCategories.e2e2h
+
+# polarization of [ electronBeam, positronBeam ]
+beam_polarization: [ +0.8, -0.3 ]
+
+# unit: ab^-1
+luminosity: 0.9
+
+# center-of-mass energy in GeV
+sqrt_s: 250
+
+reset: false
+
+processes: 'processes.json'
+event_categories: 'event_categories.yaml'
+sources: 'sources_ilc.yaml'
+
+# only used when the HDF5 data is created by the cutflow tool itself from ROOT files; here, the
+# items are written by hinv/ana/extract_observables_cutflow.py
+features: {}
+
+cutflow_table: 'cutflow_table.yaml'
+cuts: 'cuts.yaml'
+plot_options: 'plot_options.yaml'
+
+actions:
+- type: ApplyCuts
+  cuts: preselection
+  weight_column: weight
+  split: 0 # split is only read if weight_column is different than the default value 'weight'
+  step: 0 # step=0 is always preselection
+  cache: '$analysis_name_$hypothesis_cutflow_presel.pickle'
+
+- type: CreateCutflowPlots
+  file: '$analysis_name_$hypothesis_cutflow_preselection_plots.pdf'
+  bins: 64
+
+- type: CreateCutflowTable
+  file: '$analysis_name_$hypothesis_cutflow_preselection_table.pdf'

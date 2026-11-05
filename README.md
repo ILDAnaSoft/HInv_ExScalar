@@ -23,6 +23,7 @@ python -m hinv.sim.sgv batch  # $dtDir/<WHIZARD_SUBDIR> -> $dtDir/<SGV_SUBDIR>
 python -m hinv.reco.reco  # -> $dtDir/<RECO_SUBDIR>
 python -m hinv.ana.extract_observables
 python -m hinv.ana.control_plots
+python -m hinv.ana.extract_observables_cutflow  # -> $dtDir/<CUTFLOW_SUBDIR>, see hinv/configs/README.md
 ```
 
 Default sub-directories are set in `hinv/paths.py`; every script has `--help`.
