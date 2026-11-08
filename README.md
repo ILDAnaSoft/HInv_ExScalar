@@ -12,6 +12,7 @@ This repository contains shared code of the Higgs->Invisible and Extra Scalar an
 | `hinv/ana/`       | Observables, weighted datasets, plots                                                                                 |
 | `steering/`       | Gaudi steering files (run with `k4run`, not imported)                                                                 |
 | `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC                                                                                 |
+| `utils/`          | Stand-alone helpers, e.g. `plot_sgv_geometry.py` (r-z view of SGV geometries with polar-angle/eta rays)               |
 
 ## Usage
 
