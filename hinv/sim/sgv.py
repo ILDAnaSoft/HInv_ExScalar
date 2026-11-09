@@ -8,6 +8,8 @@ All files of a directory, settings chosen per collider (see samples.py):
     python -m hinv.sim.sgv batch [<input_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}]
         [--max-events N] [--steering FILE]
     Directories default to $dtDir/<WHIZARD_SUBDIR> and $dtDir/<SGV_SUBDIR> (see paths.py).
+    The steering defaults to the collider's (ILD@FCC: sgv_geometries/sgv_ildfcc.steer);
+    --steering overrides it for all files.
 
 Each job runs in its own work directory next to the output, because SGV reads and writes
 fixed file names in its CWD. The environment (key4hep, sgvenv.sh) is set up by run_sgv.
@@ -148,7 +150,10 @@ def run_batch(
     ild_fcc_version: int,
     max_events: int | None,
     steering: Path | None,
+    default_steering: Path,
 ) -> bool:
+    """steering, if given, is used for all files; otherwise the collider's steering, falling back
+    to default_steering."""
     inputs = generator_files(in_dir)
     if not inputs:
         sys.exit(f"No generator files found in {in_dir}")
@@ -165,7 +170,11 @@ def run_batch(
     with ThreadPoolExecutor(max_workers=jobs) as executor:
         futures = {}
         for f, settings in planned:
-            print(f"{f.name}: {settings.detector_model}, {settings.sgv_geometry.name}")
+            job_steering = steering or settings.sgv_steering or default_steering
+            print(
+                f"{f.name}: {settings.detector_model}, {settings.sgv_geometry.name}, "
+                f"{job_steering.name}"
+            )
             options = steering_options(
                 max_events,
                 settings.cms_energy,
@@ -178,7 +187,7 @@ def run_batch(
                 settings.sgv_geometry,
                 out_dir / f"{f.stem}.slcio",
                 options,
-                steering,
+                job_steering,
                 log=out_dir / f"{f.stem}.log",
             )
 
@@ -211,11 +220,16 @@ def main() -> int:
 
     for p in (run, batch):
         p.add_argument("--max-events", type=int, help="Default: all events")
-        p.add_argument("--steering", type=Path, help="Default: $SGV_DIR/tests/sgv.steer")
+    run.add_argument("--steering", type=Path, help="Default: $SGV_DIR/tests/sgv.steer")
+    batch.add_argument(
+        "--steering",
+        type=Path,
+        help="For all files. Default: per collider, see samples.collider_settings",
+    )
 
     args = parser.parse_args()
     # resolve paths from env vars before any job starts (exits with a message if unset)
-    steering = args.steering or sgv_dir() / "tests/sgv.steer"
+    default_steering = sgv_dir() / "tests/sgv.steer"
 
     if args.command == "run":
         options = steering_options(
@@ -226,7 +240,7 @@ def main() -> int:
             args.geometry,
             args.output,
             options,
-            steering,
+            args.steering or default_steering,
             keep_workdir=args.keep_workdir,
         )
     else:
@@ -236,7 +250,8 @@ def main() -> int:
             args.jobs,
             args.ild_fcc_version,
             args.max_events,
-            steering,
+            args.steering,
+            default_steering,
         )
     return 0 if ok else 1
 

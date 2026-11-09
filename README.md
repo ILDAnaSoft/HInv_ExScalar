@@ -11,7 +11,7 @@ This repository contains shared code of the Higgs->Invisible and Extra Scalar an
 | `hinv/reco/`      | Lepton tagging + pairing with `k4run`                                                                                 |
 | `hinv/ana/`       | Observables, weighted datasets, plots                                                                                 |
 | `steering/`       | Gaudi steering files (run with `k4run`, not imported)                                                                 |
-| `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC                                                                                 |
+| `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC, SGV steering for ILD@FCC (`sgv_ildfcc.steer`)                                  |
 | `utils/`          | Stand-alone helpers, e.g. `plot_sgv_geometry.py` (r-z view of SGV geometries with polar-angle/eta rays)               |
 
 ## Usage
@@ -25,6 +25,14 @@ python -m hinv.ana.control_plots
 ```
 
 Default sub-directories are set in `hinv/paths.py`; every script has `--help`.
+
+> [!WARNING]
+> **Run SGV with the ILD@FCC geometries only with `sgv_geometries/sgv_ildfcc.steer`**, also outside
+> the scripts of this repository. The default `$SGV_DIR/tests/sgv.steer` is written for ILD@ILC:
+> with the ILD@FCC calorimeter layers its `CALORIMETER_CODES` are shifted, so barrel ECal energy is
+> written as HCAL and the ECal-based photon and electron identification fails.
+> `python -m hinv.sim.sgv batch` selects the steering per collider; for `run`, pass
+> `--steering sgv_geometries/sgv_ildfcc.steer`.
 
 ## Dependencies
 
