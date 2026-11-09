@@ -175,7 +175,7 @@ def style_axes(ax):
     ax.tick_params(colors=MUTED, labelsize=9)
 
 
-def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str):
+def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str, title: bool = True):
     """Reconstructed di-muon mass (lines) and recoil mass (filled) for both colliders."""
     bins = np.arange(69.5, 160.5, 1.0)  # centred on integers, so m_H = 125 is a bin centre
     fig, ax = plt.subplots(figsize=(8, 5.2))
@@ -220,14 +220,15 @@ def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str):
     ax.set_ylabel("fraction of events / GeV", color=INK)
     ax.legend(frameon=False, fontsize=9, loc="center right")
     ax.set_ylim(0, None)
-    fig.suptitle(
-        rf"$ZH \to \mu\mu + \mathrm{{inv}}$, SGV, events with a reconstructed $\mu^+\mu^-$ pair"
-        f"\nILC: {ilc_polarisation}, ILD_l5_o1_v02; FCC-ee: unpolarised, ILD_FCCee_v01",
-        fontsize=10,
-        color=INK,
-        x=0.02,
-        ha="left",
-    )
+    if title:
+        fig.suptitle(
+            rf"$ZH \to \mu\mu + \mathrm{{inv}}$, SGV, events with a reconstructed $\mu^+\mu^-$ pair"
+            f"\nILC: {ilc_polarisation}, ILD_l5_o1_v02; FCC-ee: unpolarised, ILD_FCCee_v01",
+            fontsize=10,
+            color=INK,
+            x=0.02,
+            ha="left",
+        )
     style_axes(ax)
     fig.tight_layout()
     fig.savefig(out.with_suffix(".pdf"))
@@ -306,6 +307,7 @@ def main():
     parser.add_argument("--ilc-polarisation", default="eL.pR", choices=("eL.pR", "eR.pL"))
     parser.add_argument("--out", type=Path, help=f"Default: $dtDir/{RECO_SUBDIR}/plots")
     parser.add_argument("--jobs", type=int, default=4)
+    parser.add_argument("--no-title", action="store_true", help="Omit the overview title (slides)")
     args = parser.parse_args()
 
     reco_dir = data_dir() / RECO_SUBDIR
@@ -315,7 +317,7 @@ def main():
     files = signal_files(reco_dir, args.ilc_polarisation)
     data = {collider: load(f, args.jobs) for collider, f in files.items() if f}
     print_table(data)
-    plot_overview(data, out_dir / "recoil_ilc_vs_fcc", args.ilc_polarisation)
+    plot_overview(data, out_dir / "recoil_ilc_vs_fcc", args.ilc_polarisation, not args.no_title)
     plot_breakdown(data, out_dir / "recoil_breakdown")
     print(f"-> {out_dir}/recoil_ilc_vs_fcc.png, recoil_breakdown.png")
 
