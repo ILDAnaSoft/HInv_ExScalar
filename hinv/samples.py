@@ -40,6 +40,7 @@ class ColliderSettings:
     crossing_angle: float  # half crossing angle [rad], applied by SGV to head-on events
     sgv_geometry: Path
     detector_model: str  # full-sim model for the Gaudi steering (and LCIO header)
+    sgv_steering: Path | None = None  # None: $SGV_DIR/tests/sgv.steer (written for ILD@ILC)
 
 
 def parse_sample(path: str | os.PathLike) -> Sample:
@@ -81,6 +82,8 @@ def collider_settings(sample: Sample, ild_fcc_version: int = 1) -> ColliderSetti
             sgv_geometry=REPO_DIR
             / f"sgv_geometries/sgv_geo_fullsim_ildfcc_v{ild_fcc_version}.inp",
             detector_model=f"ILD_FCCee_v{ild_fcc_version:02d}",
+            # calorimeter codes for the ILD@FCC layers, see the README
+            sgv_steering=REPO_DIR / "sgv_geometries/sgv_ildfcc.steer",
         )
     else:
         settings = ColliderSettings(
@@ -90,8 +93,9 @@ def collider_settings(sample: Sample, ild_fcc_version: int = 1) -> ColliderSetti
             detector_model="ILD_l5_o1_v02",
         )
 
-    if not settings.sgv_geometry.is_file():
-        raise FileNotFoundError(f"SGV geometry not found: {settings.sgv_geometry}")
+    for f in (settings.sgv_geometry, settings.sgv_steering):
+        if f is not None and not f.is_file():
+            raise FileNotFoundError(f"SGV input not found: {f}")
     return settings
 
 
