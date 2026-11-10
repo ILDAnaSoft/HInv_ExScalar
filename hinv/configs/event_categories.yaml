@@ -1,0 +1,22 @@
+# each entry will be parsed into a EventCategoryDefinition
+# <#>.name and .id are obligatory; ID must be supplied manually;
+#   it's value is arbitrary, but must be kept constant when categories are
+#   added/removed for data to stay consistent
+# <#>.final_state: Python code to parse to a FinalStateDefinition
+# 
+
+- name: e2e2h
+  id: 0
+  final_state: "lambda source, fsc: source.getStore()['process'] == ProcessCategories.e2e2h"
+
+- name: zz_mumununu
+  id: 1
+  final_state: "lambda source, fsc: source.getStore()['process'] == ProcessCategories.zz_mumununu"
+
+- name: mumu
+  id: 2
+  final_state: "lambda source, fsc: source.getStore()['process'] == ProcessCategories.mumu"
+
+- name: eemumu
+  id: 3
+  final_state: "lambda source, fsc: source.getStore()['process'] == ProcessCategories.eemumu"
