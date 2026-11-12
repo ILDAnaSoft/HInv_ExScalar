@@ -34,6 +34,14 @@ from hinv.samples import FCCEE, ILC, parse_sample
 M_Z = 91.1879  # GeV, PDG 2026
 M_H = 125.0  # GeV, as generated
 
+FONT_SCALE = 1.0  # set by --font-scale
+
+
+def fs(size: float) -> float:
+    """Font size scaled by --font-scale."""
+    return size * FONT_SCALE
+
+
 INK = "#1b1b1a"
 MUTED = "#6b6a63"
 GRID = "#e4e3de"
@@ -172,7 +180,7 @@ def style_axes(ax):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(MUTED)
-    ax.tick_params(colors=MUTED, labelsize=9)
+    ax.tick_params(colors=MUTED, labelsize=fs(9))
 
 
 def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str, title: bool = True):
@@ -182,7 +190,7 @@ def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str, title
     for collider, d in data.items():
         color = COLLIDER_COLORS[collider]
         weights = np.full(len(d["m_ll_reco"]), 1 / len(d["m_ll_reco"]))
-        label = COLLIDER_LABELS[collider]
+        label = COLLIDER_LABELS[collider].split()[0]  # short, so the legend fits above the axes
         ax.hist(
             d["m_recoil_reco"],
             bins=bins,
@@ -199,7 +207,7 @@ def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str, title
             histtype="step",
             color=color,
             linewidth=1.5,
-            label=f"{label}: recoil mass",
+            label=rf"{label}: $M_\mathrm{{recoil}}$",
         )
         ax.hist(
             d["m_ll_reco"],
@@ -213,18 +221,31 @@ def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str, title
         )
     for m in (M_Z, M_H):
         ax.axvline(m, color=MUTED, linestyle=":", linewidth=1)
-    ax.text(M_Z + 0.8, 0.97, r"$m_Z$", transform=ax.get_xaxis_transform(), color=MUTED)
-    ax.text(M_H - 0.8, 0.97, r"$m_H$", transform=ax.get_xaxis_transform(), ha="right", color=MUTED)
+    ax.text(
+        M_Z + 0.8, 0.97, r"$m_Z$", transform=ax.get_xaxis_transform(), color=MUTED, fontsize=fs(10)
+    )
+    ax.text(
+        M_H - 0.8,
+        0.97,
+        r"$m_H$",
+        transform=ax.get_xaxis_transform(),
+        ha="right",
+        color=MUTED,
+        fontsize=fs(10),
+    )
     ax.set_xlim(bins[0], bins[-1])
-    ax.set_xlabel(r"$m_{\mu\mu}$, $M_\mathrm{recoil}$ [GeV]", color=INK)
-    ax.set_ylabel("fraction of events / GeV", color=INK)
-    ax.legend(frameon=False, fontsize=9, loc="center right")
+    ax.set_xlabel(r"$m_{\mu\mu}$, $M_\mathrm{recoil}$ [GeV]", color=INK, fontsize=fs(10))
+    ax.set_ylabel("fraction of events / GeV", color=INK, fontsize=fs(10))
+    # above the axes, so that it never covers the peaks
+    ax.legend(
+        frameon=False, fontsize=fs(9), loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=2
+    )
     ax.set_ylim(0, None)
     if title:
         fig.suptitle(
             rf"$ZH \to \mu\mu + \mathrm{{inv}}$, SGV, events with a reconstructed $\mu^+\mu^-$ pair"
             f"\nILC: {ilc_polarisation}, ILD_l5_o1_v02; FCC-ee: unpolarised, ILD_FCCee_v01",
-            fontsize=10,
+            fontsize=fs(10),
             color=INK,
             x=0.02,
             ha="left",
@@ -236,15 +257,15 @@ def plot_overview(data: dict[str, dict], out: Path, ilc_polarisation: str, title
     plt.close(fig)
 
 
-def plot_breakdown(data: dict[str, dict], out: Path):
+def plot_breakdown(data: dict[str, dict], out: Path, title: bool = True):
     """Recoil mass with the effects switched on one at a time: one column per collider, peak
     region (linear) on top, full range (log) below."""
     views = [  # (bins, log y, y label)
-        (np.arange(119.875, 132.2, 0.25), False, "fraction of events / 0.25 GeV"),
-        (np.arange(114.75, 160.25, 0.5), True, "fraction of events / 0.5 GeV"),
+        (np.arange(119.875, 132.2, 0.25), False, "fraction / 0.25 GeV"),
+        (np.arange(114.75, 160.25, 0.5), True, "fraction / 0.5 GeV"),
     ]
     shades = {"isr": "#b3b2aa", "spectrum": "#7d7c74", "fsr": "#3e3d38"}  # light -> dark
-    fig, axes = plt.subplots(2, 2, figsize=(11, 7.5), sharey="row")
+    fig, axes = plt.subplots(2, 2, figsize=(11, 8), sharey="row")
     for col, (collider, d) in enumerate(data.items()):
         n = len(d["m_recoil_reco"])
         for row, (bins, log, ylabel) in enumerate(views):
@@ -264,21 +285,24 @@ def plot_breakdown(data: dict[str, dict], out: Path):
                 )
             ax.axvline(M_H, color=MUTED, linestyle=":", linewidth=1)
             ax.set_xlim(bins[0], bins[-1])
+            if not log:
+                ax.set_xticks(np.arange(120, 133, 2))
             if log:
                 ax.set_yscale("log")
                 ax.set_ylim(1e-4, 1)
             if col == 0:
-                ax.set_ylabel(ylabel, color=INK)
+                ax.set_ylabel(ylabel, color=INK, fontsize=fs(10))
             style_axes(ax)
-        axes[0, col].set_title(COLLIDER_LABELS[collider], fontsize=11, color=INK, loc="left")
-        axes[1, col].set_xlabel(r"$M_\mathrm{recoil}$ [GeV]", color=INK)
-        axes[0, col].legend(frameon=False, fontsize=9, loc="upper right")
-    fig.suptitle(
-        "Recoil mass against the muon pair with the effects added one at a time; "
-        "'+ ISR' uses the beams after the beam spectrum, all others the nominal beams",
-        fontsize=10,
-        color=INK,
-    )
+        axes[0, col].set_title(COLLIDER_LABELS[collider], fontsize=fs(11), color=INK, loc="left")
+        axes[1, col].set_xlabel(r"$M_\mathrm{recoil}$ [GeV]", color=INK, fontsize=fs(10))
+        axes[0, col].legend(frameon=False, fontsize=fs(9), loc="upper right")
+    if title:
+        fig.suptitle(
+            "Recoil mass against the muon pair with the effects added one at a time; "
+            "'+ ISR' uses the beams after the beam spectrum, all others the nominal beams",
+            fontsize=fs(10),
+            color=INK,
+        )
     fig.tight_layout()
     fig.savefig(out.with_suffix(".pdf"))
     fig.savefig(out.with_suffix(".png"), dpi=150)
@@ -307,8 +331,13 @@ def main():
     parser.add_argument("--ilc-polarisation", default="eL.pR", choices=("eL.pR", "eR.pL"))
     parser.add_argument("--out", type=Path, help=f"Default: $dtDir/{RECO_SUBDIR}/plots")
     parser.add_argument("--jobs", type=int, default=4)
-    parser.add_argument("--no-title", action="store_true", help="Omit the overview title (slides)")
+    parser.add_argument("--no-title", action="store_true", help="Omit the figure titles (slides)")
+    parser.add_argument(
+        "--font-scale", type=float, default=1.0, help="Scale all font sizes (e.g. 1.8 for slides)"
+    )
     args = parser.parse_args()
+    global FONT_SCALE
+    FONT_SCALE = args.font_scale
 
     reco_dir = data_dir() / RECO_SUBDIR
     out_dir = args.out or reco_dir / "plots"
@@ -318,7 +347,7 @@ def main():
     data = {collider: load(f, args.jobs) for collider, f in files.items() if f}
     print_table(data)
     plot_overview(data, out_dir / "recoil_ilc_vs_fcc", args.ilc_polarisation, not args.no_title)
-    plot_breakdown(data, out_dir / "recoil_breakdown")
+    plot_breakdown(data, out_dir / "recoil_breakdown", not args.no_title)
     print(f"-> {out_dir}/recoil_ilc_vs_fcc.png, recoil_breakdown.png")
 
 
