@@ -39,7 +39,7 @@ class ColliderSettings:
     crossing_angle: float  # half crossing angle [rad], applied by SGV to head-on events
     sgv_geometry: Path
     detector_model: str  # full-sim model for the Gaudi steering (and LCIO header)
-    sgv_steering: Path | None = None  # None: $SGV_DIR/tests/sgv.steer (written for ILD@ILC)
+    sgv_steering: Path | None = None  # None: $SGV_DIR/tests/sgv.steer (ILD@ILC, DBD geometry)
 
 
 def parse_sample(path: str | Path) -> Sample:
@@ -90,6 +90,8 @@ def collider_settings(sample: Sample, ild_fcc_version: int = 1) -> ColliderSetti
             crossing_angle=0.007,  # 14 mrad full crossing angle
             sgv_geometry=REPO_DIR / "sgv_geometries/sgv_geo_ild_ilc.inp",
             detector_model="ILD_l5_o1_v02",
+            # calorimeter codes for the 11 layers of the IDR geometry, see the README
+            sgv_steering=REPO_DIR / "sgv_geometries/sgv_ild_ilc.steer",
         )
 
     for f in (settings.sgv_geometry, settings.sgv_steering):
