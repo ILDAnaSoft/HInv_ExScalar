@@ -4,6 +4,8 @@
 ! with LCIO input/output, CALO_TREATMENT = 'PERF' and FULL_TRUTHLINK = .TRUE.
 ! Only change: CALORIMETER_CODES for the 11 calorimeter layers of the IDR geometry (see analysis_steering
 ! below). Upstream (f7ae4f2) updated the geometry but not this steering.
+! TRACKER_CODES and TRACKER_NDF_PER_LAYER are left as in the default and replaced per geometry
+! by hinv.sim.sgv (hinv/sim/tracker_codes.py).
 !
 
 !
@@ -413,6 +415,9 @@
 !     6  ETD
 
 
+!  ILD@ILC: replaced per geometry by hinv.sim.sgv (hinv/sim/tracker_codes.py), with the DD4hep
+!  detector IDs (lcio::ILDDetID): 1 VXD, 2 SIT, 3 FTD, 4 TPC, 5 SET, 6 ETD. The list below (with SIT and
+!  FTD swapped) was written for the DBD layer order and fits neither that nor the IDR geometry.
 !  TRACKER_CODES = 0
   TRACKER_CODES = 32   
    0 1 0 1 0 1 0 1 0 0 0 3 3 0 4 0 5 0 0 0 

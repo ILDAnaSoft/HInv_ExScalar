@@ -52,6 +52,15 @@ Default sub-directories are set in `hinv/paths.py`; every script has `--help`.
 > ECal-based photon and electron identification fails.
 > `python -m hinv.sim.sgv batch` selects the steering per collider; for `run`, pass `--steering`.
 
+`hinv.sim.sgv` also sets the tracker codes per geometry (`hinv/sim/tracker_codes.py`): the
+subdetector hit numbers of SGV tracks then follow the DD4hep detector IDs as in full simulation
+(ILD@ILC: VXD 1, SIT 2, FTD 3, TPC 4, SET 5, ETD 6; ILD@FCC: vertex barrel 1, vertex endcap 2,
+inner tracker barrel 3, TPC 4, inner tracker endcap 5, SET 6), with one TPC hit per pad row.
+The `TRACKER_CODES` of the steering files fit none of the geometries, so outside these scripts the
+track hit numbers are mislabelled. For `run`, pass `--detector` (e.g. `ILD_FCCee_v01`) to get the
+codes. Measuring layers of one subdetector must have names that match its pattern in
+`tracker_codes.py`; otherwise SGV is not started.
+
 ## Dependencies
 
 `steering/llrecoil.py` uses the `LeptonPairingCombined` processor from [ILDAnaSoft/ZHH](https://github.com/ILDAnaSoft/ZHH) (`source/LeptonPairing`, add `lib/libLeptonPairing.so` to `MARLIN_DLL`).

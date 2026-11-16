@@ -13,6 +13,10 @@ All files of a directory, settings chosen per collider (see samples.py):
 
 Each job runs in its own work directory next to the output, because SGV reads and writes
 fixed file names in its CWD. The environment (key4hep, sgvenv.sh) is set up by run_sgv.
+
+The tracker codes (labels of the track hits per subdetector) are derived per geometry and detector
+model, see tracker_codes.py: SGV is first run without events to get its layer table. With `run`
+this needs --detector; without it the codes of the steering file are used.
 """
 
 from __future__ import annotations
@@ -30,6 +34,7 @@ from pathlib import Path
 from hinv.paths import SGV_SUBDIR, WHIZARD_SUBDIR, data_dir, sgv_dir
 from hinv.samples import collider_settings, parse_sample
 from hinv.sim.sgv_steering import merge_options
+from hinv.sim.tracker_codes import parse_layer_groups, tracker_codes
 
 RUN_SGV = Path(__file__).resolve().parent / "run_sgv"
 SGV_OUTPUT = "sgvout.slcio"  # set via analysis_steering.FILENAME
@@ -81,6 +86,45 @@ def prepare_workdir(
     (work / "fort.17").write_text(merge_options(steering.read_text(), options))
 
 
+def execute(work: Path, stream) -> int:
+    """Runs SGV in a prepared work directory; returns the exit code."""
+    return subprocess.run(
+        [str(RUN_SGV), str(work)],
+        stdout=stream,
+        stderr=subprocess.STDOUT,
+        env={**os.environ, "SGV_DIR": str(sgv_dir())},
+        check=False,  # failures are reported by the callers
+    ).returncode
+
+
+def tracker_options(
+    input_file: Path, geometry: Path, steering: Path, detector: str, work_parent: Path
+) -> dict:
+    """TRACKER_CODES and TRACKER_NDF_PER_LAYER for this geometry and full-sim detector model.
+
+    Runs SGV without events to read its tracking-layer groups. Raises RuntimeError if that run
+    fails and ValueError if the layers can't be labelled consistently (see tracker_codes.py).
+    """
+    input_file, geometry, steering = (p.resolve() for p in (input_file, geometry, steering))
+    work_parent.mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix="TMP-sgv-layers-", dir=work_parent))
+    try:
+        prepare_workdir(work, input_file, geometry, steering, {"global_steering.MAXEV": 0})
+        log = work / "layers.log"
+        with open(log, "w") as stream:
+            returncode = execute(work, stream)
+        if returncode != 0:
+            raise RuntimeError(f"SGV layer-table run failed (exit code {returncode}), see {log}")
+        groups = parse_layer_groups(log.read_text())
+    except Exception:
+        print(f"Work dir kept: {work}", file=sys.stderr)
+        raise
+    shutil.rmtree(work)
+    codes = tracker_codes(groups, geometry, steering, detector)
+    print(f"{geometry.name} ({detector}): {codes.summary()}")
+    return codes.steering_options()
+
+
 def run_sgv(
     input_file: Path,
     geometry: Path,
@@ -107,19 +151,12 @@ def run_sgv(
     prepare_workdir(work, input_file, geometry, steering, options)
 
     with open(log, "w") if log else nullcontext() as stream:
-        result = subprocess.run(
-            [str(RUN_SGV), str(work)],
-            stdout=stream,
-            stderr=subprocess.STDOUT,
-            env={**os.environ, "SGV_DIR": str(sgv_dir())},
-            check=False,  # failures are reported via returncode below
-        )
+        returncode = execute(work, stream)
 
     produced = work / SGV_OUTPUT
-    if result.returncode != 0 or not produced.exists():
+    if returncode != 0 or not produced.exists():
         print(
-            f"SGV failed for {input_file.name} (exit code {result.returncode}), "
-            f"work dir kept: {work}",
+            f"SGV failed for {input_file.name} (exit code {returncode}), work dir kept: {work}",
             file=sys.stderr,
         )
         return False
@@ -167,6 +204,14 @@ def run_batch(
             print(f"Skipping {f.name}: {e}")
 
     out_dir.mkdir(parents=True, exist_ok=True)
+    # tracker codes once per geometry, steering and detector model
+    codes: dict[tuple, dict] = {}
+    for f, settings in planned:
+        job_steering = steering or settings.sgv_steering or default_steering
+        key = (settings.sgv_geometry, job_steering, settings.detector_model)
+        if key not in codes:
+            codes[key] = tracker_options(f, *key, out_dir)
+
     with ThreadPoolExecutor(max_workers=jobs) as executor:
         futures = {}
         for f, settings in planned:
@@ -181,6 +226,7 @@ def run_batch(
                 settings.crossing_angle,
                 settings.detector_model,
             )
+            options |= codes[(settings.sgv_geometry, job_steering, settings.detector_model)]
             futures[f.name] = executor.submit(
                 run_sgv,
                 f,
@@ -209,7 +255,11 @@ def main() -> int:
     run.add_argument("output", type=Path, help="Output .slcio")
     run.add_argument("--cms-energy", type=float)
     run.add_argument("--crossing-angle", type=float, help="Half crossing angle [rad]")
-    run.add_argument("--detector", help="Detector name written to the LCIO header")
+    run.add_argument(
+        "--detector",
+        help="Full-sim detector model (e.g. ILD_FCCee_v01): written to the LCIO header and "
+        "selects the tracker codes",
+    )
     run.add_argument("--keep-workdir", action="store_true")
 
     batch = sub.add_parser("batch", help="Run SGV on all files of a directory")
@@ -232,15 +282,22 @@ def main() -> int:
     default_steering = sgv_dir() / "tests/sgv.steer"
 
     if args.command == "run":
+        steering = args.steering or default_steering
         options = steering_options(
             args.max_events, args.cms_energy, args.crossing_angle, args.detector
         )
+        if args.detector:
+            options |= tracker_options(
+                args.input, args.geometry, steering, args.detector, args.output.resolve().parent
+            )
+        else:
+            print("No --detector: tracker codes of the steering file are used", file=sys.stderr)
         ok = run_sgv(
             args.input,
             args.geometry,
             args.output,
             options,
-            args.steering or default_steering,
+            steering,
             keep_workdir=args.keep_workdir,
         )
     else:
