@@ -12,7 +12,7 @@ This repository contains shared code of the Higgs->Invisible and Extra Scalar an
 | `hinv/ana/`       | Observables, weighted datasets, plots                                                                                 |
 | `hinv/configs/`   | Steering files for the `cutflow` tool of ILDAnaSoft/ZHH, see [hinv/configs/README.md](hinv/configs/README.md)         |
 | `steering/`       | Gaudi steering files (run with `k4run`, not imported)                                                                 |
-| `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC, SGV steering for ILD@FCC (`sgv_ildfcc.steer`)                                  |
+| `sgv_geometries/` | SGV geometries of ILD@FCC and ILD@ILC, SGV steering for each (`sgv_ildfcc.steer`, `sgv_ild_ilc.steer`)              |
 | `utils/`          | Stand-alone helpers, e.g. `plot_sgv_geometry.py` (r-z view of SGV geometries with polar-angle/eta rays)               |
 
 ## Setup
@@ -44,12 +44,13 @@ python -m hinv.ana.extract_observables_cutflow  # -> $dtDir/<CUTFLOW_SUBDIR>, se
 Default sub-directories are set in `hinv/paths.py`; every script has `--help`.
 
 > [!WARNING]
-> **Run SGV with the ILD@FCC geometries only with `sgv_geometries/sgv_ildfcc.steer`**, also outside
-> the scripts of this repository. The default `$SGV_DIR/tests/sgv.steer` is written for ILD@ILC:
-> with the ILD@FCC calorimeter layers its `CALORIMETER_CODES` are shifted, so barrel ECal energy is
-> written as HCAL and the ECal-based photon and electron identification fails.
-> `python -m hinv.sim.sgv batch` selects the steering per collider; for `run`, pass
-> `--steering sgv_geometries/sgv_ildfcc.steer`.
+> **Run SGV with each geometry only with its steering in `sgv_geometries/`** (`sgv_ildfcc.steer` for
+> ILD@FCC, `sgv_ild_ilc.steer` for ILD@ILC), also outside the scripts of this repository. The
+> default `$SGV_DIR/tests/sgv.steer` is written for the old DBD version of ILD@ILC: with the
+> ILD@FCC and with the ILD-IDR calorimeter layers its `CALORIMETER_CODES` are shifted, so e.g.
+> barrel ECal energy is written as HCAL (ILD@FCC) or endcap ECal energy as LCAL (ILD@ILC), and the
+> ECal-based photon and electron identification fails.
+> `python -m hinv.sim.sgv batch` selects the steering per collider; for `run`, pass `--steering`.
 
 ## Dependencies
 

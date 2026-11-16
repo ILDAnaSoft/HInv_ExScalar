@@ -8,8 +8,8 @@ All files of a directory, settings chosen per collider (see samples.py):
     python -m hinv.sim.sgv batch [<input_dir>] [<output_dir>] [--jobs N] [--ild-fcc-version {1,2}]
         [--max-events N] [--steering FILE]
     Directories default to $dtDir/<WHIZARD_SUBDIR> and $dtDir/<SGV_SUBDIR> (see paths.py).
-    The steering defaults to the collider's (ILD@FCC: sgv_geometries/sgv_ildfcc.steer);
-    --steering overrides it for all files.
+    The steering defaults to the collider's (sgv_geometries/sgv_ildfcc.steer,
+    sgv_geometries/sgv_ild_ilc.steer); --steering overrides it for all files.
 
 Each job runs in its own work directory next to the output, because SGV reads and writes
 fixed file names in its CWD. The environment (key4hep, sgvenv.sh) is set up by run_sgv.
