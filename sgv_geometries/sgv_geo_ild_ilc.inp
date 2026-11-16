@@ -7,8 +7,10 @@ BF: BFIELD=3.5
 
 TYPE:  BARREL_TRACKING
 
+C       R: mean radius of the central beam pipe, 0.05 cm Be at r = 1.35-1.40 cm (X0 unchanged, 35.28 cm),
+C       from k4geo v00-24 (b0087c8c, key4hep release 2026-04-08), ILD_common_v02/Beampipe_o1_v01_01.xml
       LAYER: BEAMPIPE
-         GEOMETRY:  R=1.4, ZMIN=0.0, ZMAX=999.9
+         GEOMETRY:  R=1.375, ZMIN=0.0, ZMAX=999.9
          MATERIAL:    X0=.0014173947, A= 4
          MEASUREMENT: CODE=0
 
