@@ -1,0 +1,29 @@
+# Sources of the runs at ILC, one per process; each holds all polarisations of the process.
+# path is not read with --skip-integrity-check, but is required and names the items.
+- name: e2e2h
+  path: $DATASET_ROOT/dataset_ilc_e2e2h
+  root_files: ''
+  event_categorization: { default: null, order: null, items: [ e2e2h ] }
+  disabled: false
+  reset: false
+
+- name: e2e2vv
+  path: $DATASET_ROOT/dataset_ilc_e2e2vv
+  root_files: ''
+  event_categorization: { default: null, order: null, items: [ zz_mumununu ] }
+  disabled: false
+  reset: false
+
+- name: mumu
+  path: $DATASET_ROOT/dataset_ilc_mumu
+  root_files: ''
+  event_categorization: { default: null, order: null, items: [ mumu ] }
+  disabled: false
+  reset: false
+
+- name: eemumu
+  path: $DATASET_ROOT/dataset_ilc_eemumu
+  root_files: ''
+  event_categorization: { default: null, order: null, items: [ eemumu ] }
+  disabled: false
+  reset: false

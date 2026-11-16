@@ -8,7 +8,6 @@ File names follow the WHIZARD/ILD convention, e.g.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -43,7 +42,7 @@ class ColliderSettings:
     sgv_steering: Path | None = None  # None: $SGV_DIR/tests/sgv.steer (written for ILD@ILC)
 
 
-def parse_sample(path: str | os.PathLike) -> Sample:
+def parse_sample(path: str | Path) -> Sample:
     tokens = Path(path).name.split(".")
     if len(tokens) < 2 or not tokens[1].startswith("P"):
         raise ValueError(f"Cannot parse sample name: {path}")
@@ -97,43 +96,3 @@ def collider_settings(sample: Sample, ild_fcc_version: int = 1) -> ColliderSetti
         if f is not None and not f.is_file():
             raise FileNotFoundError(f"SGV input not found: {f}")
     return settings
-
-
-# --- run plans and polarisation weights -------------------------------------------------------
-# TODO: check against the official run plans before showing results
-#   ILC250 "H20": 2 ab^-1, 45 % each (-0.8, +0.3) and (+0.8, -0.3), 5 % each (-,-), (+,+)
-#   FCC-ee: 10.8 ab^-1 at 240 GeV
-# The (-,-) and (+,+) runs are omitted: there are no LL/RR samples, and ZH and mumununu
-# (s-channel, t-channel nu exchange) vanish there; for eemumu (t-channel photon) they would not.
-
-
-@dataclass(frozen=True)
-class Run:
-    name: str
-    collider: str
-    energy: int
-    luminosity: float  # integrated luminosity [fb^-1]
-    pol_electron: float = 0.0  # P(e-), -0.8 = 80 % left-handed
-    pol_positron: float = 0.0  # P(e+)
-
-    def helicity_fraction(self, polarisation: str) -> float:
-        """Fraction of this run's luminosity in a fully polarised sample's helicity state."""
-        if polarisation == "eU.pU":
-            if self.pol_electron or self.pol_positron:
-                raise ValueError(f"unpolarised sample used for polarised run {self.name}")
-            return 1.0
-        sign_e = -1 if polarisation.startswith("eL") else 1
-        sign_p = -1 if polarisation.endswith("pL") else 1
-        return (1 + sign_e * self.pol_electron) * (1 + sign_p * self.pol_positron) / 4
-
-    def polarisations(self) -> tuple[str, ...]:
-        if self.pol_electron or self.pol_positron:
-            return ("eL.pR", "eR.pL")
-        return ("eU.pU",)
-
-
-RUNS = {
-    "ILC250_LR": Run("ILC 250, P(e-,e+) = (-0.8, +0.3)", ILC, 250, 900.0, -0.8, 0.3),
-    "ILC250_RL": Run("ILC 250, P(e-,e+) = (+0.8, -0.3)", ILC, 250, 900.0, 0.8, -0.3),
-    "FCCee240": Run("FCC-ee 240", FCCEE, 240, 10800.0),
-}

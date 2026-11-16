@@ -1,0 +1,12 @@
+# Labels use the macros of zhh/resources/CutflowTableLatexPreamble.tex in ILDAnaSoft/ZHH; pdflatex
+# stops with a timeout on an undefined macro.
+items:
+  - category: mumu
+    label: '\HepProcess{\Pgm\Pgm}'
+  - category: eemumu
+    label: '\HepProcess{\Pe\Pe\Pgm\Pgm}'
+  - category: zz_mumununu
+    label: '\HepProcess{\Pgm\Pgm\Pgn\Pgn}'
+  - category: e2e2h
+    label: '\HepProcess{\Pgm\Pgm\PH}'
+    is_signal: true

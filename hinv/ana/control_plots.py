@@ -21,7 +21,7 @@ import numpy as np
 
 from hinv.ana.dataset import PROCESSES, SIGNAL, load_run
 from hinv.paths import RECO_SUBDIR, data_dir
-from hinv.samples import RUNS
+from hinv.runs import RUNS
 
 INK = "#1b1b1a"
 MUTED = "#6b6a63"

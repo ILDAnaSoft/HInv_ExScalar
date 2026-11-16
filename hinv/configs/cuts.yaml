@@ -1,0 +1,10 @@
+# First, not yet optimised selection, applied to all runs.
+# See config/mmHHbbbb.yaml in ILDAnaSoft/ZHH for documentation of the syntax.
+preselection:
+- { quantity: pair_type, operator: eq, value: 13, label: Paired Lepton Type }
+- { quantity: n_isolep, operator: eq, value: 2, label: 'N_{isolep}' }
+- { quantity: m_ll, operator: within_bounds, lower: 81., upper: 101., label: 'm_{ll}', unit: 'GeV' }
+- { quantity: pt_ll, operator: within_bounds, lower: 10., upper: 70., label: 'p_{t}^{ll}', unit: 'GeV' }
+- { quantity: cos_miss, operator: lte, value: 0.98, label: '|cos\theta_{miss}|' }
+- { quantity: e_rest, operator: lte, value: 30., label: 'E_{rest}', unit: 'GeV' }
+- { quantity: m_recoil, operator: within_bounds, lower: 110., upper: 155., label: 'm_{recoil}', unit: 'GeV' }

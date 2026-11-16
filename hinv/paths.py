@@ -26,6 +26,7 @@ RUN = "2026-10-27"
 WHIZARD_SUBDIR = f"2026-10-whizard/{RUN}"
 SGV_SUBDIR = f"2026-10-sgv/{RUN}"
 RECO_SUBDIR = f"2026-10-reco/{RUN}"
+CUTFLOW_SUBDIR = f"2026-10-cutflow/{RUN}"
 
 
 def env_dir(name: str) -> Path:
