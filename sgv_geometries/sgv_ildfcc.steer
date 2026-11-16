@@ -3,6 +3,8 @@
 ! samples/lcio/sgv_ild_lcio_extread.steer of https://gitlab.desy.de/mikael.berggren/sgv (commit 37e6729)
 ! with LCIO input/output, CALO_TREATMENT = 'PERF' and FULL_TRUTHLINK = .TRUE.
 ! Only change: CALORIMETER_CODES for the ILD@FCC calorimeter layers (see analysis_steering below).
+! TRACKER_CODES and TRACKER_NDF_PER_LAYER are left as in the default and replaced per geometry
+! by hinv.sim.sgv (hinv/sim/tracker_codes.py).
 !
 
 !
@@ -412,6 +414,9 @@
 !     6  ETD
 
 
+!  ILD@FCC: replaced per geometry by hinv.sim.sgv (hinv/sim/tracker_codes.py), with the DD4hep
+!  detector IDs of ILD_FCCee: 1 vertex barrel, 2 vertex endcap, 3 inner tracker barrel, 4 TPC,
+!  5 inner tracker endcap, 6 SET. The list below is the ILD@ILC default and fits no ILD@FCC geometry.
 !  TRACKER_CODES = 0
   TRACKER_CODES = 32   
    0 1 0 1 0 1 0 1 0 0 0 3 3 0 4 0 5 0 0 0 
