@@ -17,6 +17,11 @@ Usage:
     python utils/plot_sgv_geometry.py sgv_geometries/sgv_geo_fullsim_ildfcc_v{1,2}.inp \
         --titles "ILD@FCCee (V1)" "ILD@FCCee (V2)" --z-range 0 300 --r-range 0 100 \
         --mrad 150 110 100 --eta 2 3 -o ild_fcc_mdi.pdf
+    # same for slides: larger fonts, matching panel size and legend layout
+    python utils/plot_sgv_geometry.py sgv_geometries/sgv_geo_fullsim_ildfcc_v{1,2}.inp \
+        --titles "ILD@FCCee (V1)" "ILD@FCCee (V2)" --z-range 0 300 --r-range 0 100 \
+        --mrad 150 110 100 --eta 2 3 --font-scale 1.8 --panel-size 6.5 4.2 --legend-ncol 5 \
+        -o ild_fcc_mdi.pdf
     python utils/plot_sgv_geometry.py sgv_geometries/sgv_geo_ild_ilc.inp --dump
 """
 
@@ -38,6 +43,15 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch, Rectangle
 
 BARREL_SECTIONS = ("BARREL_TRACKING", "BARREL_CALORIMETRY")
+
+FONT_SCALE = 1.0  # set by --font-scale
+
+
+def fs(size: float) -> float:
+    """Font size scaled by --font-scale."""
+    return size * FONT_SCALE
+
+
 TRACKING_SECTIONS = ("BARREL_TRACKING", "FORWARD_TRACKING")
 # SGV puts ZMAX=999.9 on the beam pipe: ignore such sentinel extents for the default view.
 SENTINEL_EXTENT = 900.0
@@ -335,7 +349,7 @@ def draw_ray(ax, ray: Ray, zlim, rlim, label_at: float = 0.98):
         end * s,
         ray.label,
         color=ray.color,
-        fontsize=8,
+        fontsize=fs(8),
         ha="right",
         va="bottom",
         rotation=math.degrees(ray.theta),
@@ -403,8 +417,8 @@ def style_axes(ax):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(MUTED)
-    ax.tick_params(colors=MUTED, labelsize=8)
-    ax.set_xlabel("z [cm]", color=INK)
+    ax.tick_params(colors=MUTED, labelsize=fs(8))
+    ax.set_xlabel("z [cm]", color=INK, fontsize=fs(10))
 
 
 def main(argv=None):
@@ -429,9 +443,15 @@ def main(argv=None):
         "--panel-size", nargs=2, type=float, default=(6.0, 3.6), metavar=("W", "H"), help="inch"
     )
     parser.add_argument("--line-scale", type=float, default=1.0, help="scale layer line widths")
+    parser.add_argument(
+        "--font-scale", type=float, default=1.0, help="scale all font sizes (e.g. 2 for slides)"
+    )
     parser.add_argument("--no-legend", action="store_true")
+    parser.add_argument("--legend-ncol", type=int, help="legend columns (default: fit the width)")
     parser.add_argument("--dump", action="store_true", help="print the parsed layers and exit")
     args = parser.parse_args(argv)
+    global FONT_SCALE
+    FONT_SCALE = args.font_scale
 
     if args.titles and len(args.titles) != len(args.geometries):
         sys.exit("--titles needs one title per geometry")
@@ -485,12 +505,12 @@ def main(argv=None):
         for k, ray in enumerate(sorted(rays, key=lambda r: r.theta)):
             draw_ray(ax, ray, zlim, rlim, label_at=LABEL_POSITIONS[k % len(LABEL_POSITIONS)])
         title = args.titles[i] if args.titles else geo.path.stem
-        ax.set_title(title, color=INK, fontsize=11, loc="left")
+        ax.set_title(title, color=INK, fontsize=fs(11), loc="left")
         if geo.bfield is not None:
-            ax.set_title(f"B = {geo.bfield:g} T", color=MUTED, fontsize=8, loc="right")
+            ax.set_title(f"B = {geo.bfield:g} T", color=MUTED, fontsize=fs(8), loc="right")
         style_axes(ax)
         if i % ncols == 0:
-            ax.set_ylabel("r [cm]", color=INK)
+            ax.set_ylabel("r [cm]", color=INK, fontsize=fs(10))
     for ax in axes.flat[n:]:
         ax.set_visible(False)
 
@@ -511,10 +531,12 @@ def main(argv=None):
         fig.legend(
             handles=handles,
             loc="outside lower center",
-            # about 1.6 inch per entry, so the legend never gets wider than the figure
-            ncol=max(1, min(len(handles), int(fig.get_figwidth() / 1.6))),
+            # about 1.6 inch per entry (at font scale 1), so the legend never gets wider than
+            # the figure
+            ncol=args.legend_ncol
+            or max(1, min(len(handles), int(fig.get_figwidth() / (1.6 * FONT_SCALE)))),
             frameon=False,
-            fontsize=8,
+            fontsize=fs(8),
         )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
