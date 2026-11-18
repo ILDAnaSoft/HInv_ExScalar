@@ -1,7 +1,11 @@
-"""Isolated lepton tagging + lepton pairing for the ZH -> ll + X recoil analysis.
+"""Isolated lepton and photon tagging + lepton pairing for the ZH -> ll + X recoil analysis.
 
 Isolated muons and electrons are tagged in two passes (muons first, electrons on the remaining
 PFOs) and paired by LeptonPairingCombined, as in ZHH's scripts/prod_reco.xml.
+
+Isolated photons are tagged independently on the full PandoraPFOs collection, so that the
+leptons are in the isolation cones: on PFOs without leptons, FSR photons would look isolated.
+The processor only creates subset collections and leaves the lepton tagging unchanged.
 
 Usage:
     MARLIN_DLL=$codeDir/ZHH/source/LeptonPairing/lib/libLeptonPairing.so:$MARLIN_DLL \
@@ -131,6 +135,26 @@ MyLeptonPairing.Parameters = {
     "fillRootTree": ["true"],
 }
 
+# Cut-based (the MVA parameters of the processor are unused): a neutral PFO of type 22 with
+# E > MinEForPhoton is isolated if the charged (neutral) energy in the cone CosConeSmall is below
+# RatioChargedConeEnergy (RatioNeutralConeEnergy) times its energy.
+MyIsolatedPhotonTagging = MarlinProcessorWrapper("MyIsolatedPhotonTagging")
+MyIsolatedPhotonTagging.OutputLevel = INFO
+MyIsolatedPhotonTagging.ProcessorType = "IsolatedPhotonTaggingProcessor"
+MyIsolatedPhotonTagging.Parameters = {
+    "InputPandoraPFOsCollection": [PFOCollection],
+    "OutputIsoPhotonsCollection": ["ISOPhotons"],
+    "OutputPFOsWithoutIsoPhotonCollection": ["PandoraPFOsWithoutIsoPhoton"],
+    "IsSelectingOneIsoPhoton": ["false"],  # keep all isolated photons, not only the hardest
+    "MinEForPhoton": ["5"],  # [GeV]
+    "CosConeSmall": ["0.98"],
+    # no effect: the processor sums the PFOs in this cone into a four-momentum it never uses
+    # (MarlinReco 1.38, Utilities.cc getConeEnergy)
+    "CosConeLarge": ["0.95"],
+    "RatioChargedConeEnergy": ["0.1"],
+    "RatioNeutralConeEnergy": ["0.2"],
+}
+
 MyLCIOOutputProcessor = MarlinProcessorWrapper("MyLCIOOutputProcessor")
 MyLCIOOutputProcessor.OutputLevel = INFO
 MyLCIOOutputProcessor.ProcessorType = "LCIOOutputProcessor"
@@ -143,6 +167,7 @@ MyLCIOOutputProcessor.Parameters = {
 algList.append(MyIsolatedMuonTagging)
 algList.append(MyIsolatedElectronTagging)
 algList.append(MyLeptonPairing)
+algList.append(MyIsolatedPhotonTagging)
 algList.append(MyLCIOOutputProcessor)
 
 from Configurables import ApplicationMgr
