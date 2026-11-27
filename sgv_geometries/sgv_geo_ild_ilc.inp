@@ -390,9 +390,11 @@ C            MEASUREMENT: CODE=2, SIG_X=0.0012, SIG_Y=0.0012
             GEOMETRY:  Z=265.0 , RMIN=35., RMAX=322.588
             MATERIAL:    X0=0
             MEASUREMENT: CODE=10
+C       Z: first absorber just behind the HCal endcap front face (265.0, k4geo ILD_l5_v02); upstream f7ae4f2
+C       has 262.61, inside the ECal endcap (241.1-264.2): front face moved by -7.6 from DBD, absorbers by -10
       LAYER : HCALENDCAP-MAT
          REPEAT : TIMES = 4 , DELTA_Z = 31.8
-            GEOMETRY:  Z=262.61 , RMIN=35.0, RMAX=322.588
+            GEOMETRY:  Z=265.01 , RMIN=35.0, RMAX=322.588
             MATERIAL:     X0=13.6363636363, A= 26
             MEASUREMENT: CODE=10
          ENDREPEAT :
